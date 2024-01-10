@@ -1,12 +1,12 @@
 .. _cli:
 
 ================================
- sqlite-utils command-line tool
+ duckdb-utils command-line tool
 ================================
 
-The ``sqlite-utils`` command-line tool can be used to manipulate SQLite databases in a number of different ways.
+The ``duckdb-utils`` command-line tool can be used to manipulate DuckDB databases in a number of different ways.
 
-Once :ref:`installed <installation>` the tool should be available as ``sqlite-utils``. It can also be run using ``python -m sqlite_utils``.
+Once :ref:`installed <installation>` the tool should be available as ``duckdb-utils``. It can also be run using ``python -m duckdb_utils``.
 
 .. contents:: :local:
    :class: this-will-duplicate-information-and-it-is-still-useful-here
@@ -16,18 +16,18 @@ Once :ref:`installed <installation>` the tool should be available as ``sqlite-ut
 Running SQL queries
 ===================
 
-The ``sqlite-utils query`` command lets you run queries directly against a SQLite database file. This is the default subcommand, so the following two examples work the same way:
+The ``duckdb-utils query`` command lets you run queries directly against a DuckDB database file. This is the default subcommand, so the following two examples work the same way:
 
 .. code-block:: bash
 
-    sqlite-utils query dogs.db "select * from dogs"
+    duckdb-utils query cats.duckdb "select * from cats"
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select * from dogs"
+    duckdb-utils cats.duckdb "select * from cats"
 
 .. note::
-    In Python: :ref:`db.query() <python_api_query>`  CLI reference: :ref:`sqlite-utils query <cli_ref_query>`
+    In Python: :ref:`db.query() <python_api_query>`  CLI reference: :ref:`duckdb-utils query <cli_ref_query>`
 
 .. _cli_query_json:
 
@@ -38,11 +38,11 @@ The default format returned for queries is JSON:
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select * from dogs"
+    duckdb-utils cats.duckdb "select * from cats"
 
 .. code-block:: output
 
-    [{"id": 1, "age": 4, "name": "Cleo"},
+    [{"id": 1, "age": 4, "name": "Emme"},
      {"id": 2, "age": 2, "name": "Pancakes"}]
 
 .. _cli_query_nl:
@@ -54,11 +54,11 @@ Use ``--nl`` to get back newline-delimited JSON objects:
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select * from dogs" --nl
+    duckdb-utils cats.duckdb "select * from cats" --nl
 
 .. code-block:: output
 
-    {"id": 1, "age": 4, "name": "Cleo"}
+    {"id": 1, "age": 4, "name": "Emme"}
     {"id": 2, "age": 2, "name": "Pancakes"}
 
 .. _cli_query_arrays:
@@ -70,29 +70,29 @@ You can use ``--arrays`` to request arrays instead of objects:
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select * from dogs" --arrays
+    duckdb-utils cats.duckdb "select * from cats" --arrays
 
 .. code-block:: output
 
-    [[1, 4, "Cleo"],
+    [[1, 4, "Emme"],
      [2, 2, "Pancakes"]]
 
 You can also combine ``--arrays`` and ``--nl``:
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select * from dogs" --arrays --nl
+    duckdb-utils cats.duckdb "select * from cats" --arrays --nl
 
 .. code-block:: output
 
-    [1, 4, "Cleo"]
+    [1, 4, "Emme"]
     [2, 2, "Pancakes"]
 
 If you want to pretty-print the output further, you can pipe it through ``python -mjson.tool``:
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select * from dogs" | python -mjson.tool
+    duckdb-utils cats.duckdb "select * from cats" | python -mjson.tool
 
 .. code-block:: output
 
@@ -100,7 +100,7 @@ If you want to pretty-print the output further, you can pipe it through ``python
         {
             "id": 1,
             "age": 4,
-            "name": "Cleo"
+            "name": "Emme"
         },
         {
             "id": 2,
@@ -118,7 +118,7 @@ Binary strings are not valid JSON, so BLOB columns containing binary data will b
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select name, content from images" | python -mjson.tool
+    duckdb-utils cats.duckdb "select name, content from images" | python -mjson.tool
 
 .. code-block:: output
 
@@ -141,14 +141,14 @@ If one of your columns contains JSON, by default it will be returned as an escap
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select * from dogs" | python -mjson.tool
+    duckdb-utils cats.duckdb "select * from cats" | python -mjson.tool
 
 .. code-block:: output
 
     [
         {
             "id": 1,
-            "name": "Cleo",
+            "name": "Emme",
             "friends": "[{\"name\": \"Pancakes\"}, {\"name\": \"Bailey\"}]"
         }
     ]
@@ -157,14 +157,14 @@ You can use the ``--json-cols`` option to automatically detect these JSON column
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select * from dogs" --json-cols | python -mjson.tool
+    duckdb-utils cats.duckdb "select * from cats" --json-cols | python -mjson.tool
 
 .. code-block:: output
 
     [
         {
             "id": 1,
-            "name": "Cleo",
+            "name": "Emme",
             "friends": [
                 {
                     "name": "Pancakes"
@@ -185,35 +185,35 @@ You can use the ``--csv`` option to return results as CSV:
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select * from dogs" --csv
+    duckdb-utils cats.duckdb "select * from cats" --csv
 
 .. code-block:: output
 
     id,age,name
-    1,4,Cleo
+    1,4,Emme
     2,2,Pancakes
 
 This will default to including the column names as a header row. To exclude the headers, use ``--no-headers``:
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select * from dogs" --csv --no-headers
+    duckdb-utils cats.duckdb "select * from cats" --csv --no-headers
 
 .. code-block:: output
 
-    1,4,Cleo
+    1,4,Emme
     2,2,Pancakes
 
 Use ``--tsv`` instead of ``--csv`` to get back tab-separated values:
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select * from dogs" --tsv
+    duckdb-utils cats.duckdb "select * from cats" --tsv
 
 .. code-block:: output
 
     id	age	name
-    1	4	Cleo
+    1	4	Emme
     2	2	Pancakes
 
 .. _cli_query_table:
@@ -225,27 +225,27 @@ You can use the ``--table`` option (or ``-t`` shortcut) to output query results 
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select * from dogs" --table
+    duckdb-utils cats.duckdb "select * from cats" --table
 
 .. code-block:: output
 
       id    age  name
     ----  -----  --------
-       1      4  Cleo
+       1      4  Emme
        2      2  Pancakes
 
 You can use the ``--fmt`` option to specify different table formats, for example ``rst`` for reStructuredText:
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select * from dogs" --fmt rst
+    duckdb-utils cats.duckdb "select * from cats" --fmt rst
 
 .. code-block:: output
 
     ====  =====  ========
       id    age  name
     ====  =====  ========
-       1      4  Cleo
+       1      4  Emme
        2      2  Pancakes
     ====  =====  ========
 
@@ -295,7 +295,7 @@ Available ``--fmt`` options are:
 
 .. [[[end]]]
 
-This list can also be found by running ``sqlite-utils query --help``.
+This list can also be found by running ``duckdb-utils query --help``.
 
 .. _cli_query_raw:
 
@@ -308,13 +308,13 @@ For example, to retrieve a binary image from a ``BLOB`` column and store it in a
 
 .. code-block:: bash
 
-    sqlite-utils photos.db "select contents from photos where id=1" --raw > myphoto.jpg
+    duckdb-utils photos.duckdb "select contents from photos where id=1" --raw > myphoto.jpg
 
 To return the first column of each result as raw data, separated by newlines, use ``--raw-lines``:
 
 .. code-block:: bash
 
-    sqlite-utils photos.db "select caption from photos" --raw-lines > captions.txt
+    duckdb-utils photos.duckdb "select caption from photos" --raw-lines > captions.txt
 
 .. _cli_query_parameters:
 
@@ -325,7 +325,7 @@ You can pass named parameters to the query using ``-p``:
 
 .. code-block:: bash
 
-    sqlite-utils query dogs.db "select :num * :num2" -p num 5 -p num2 6
+    duckdb-utils query cats.duckdb "select :num * :num2" -p num 5 -p num2 6
 
 .. code-block:: output
 
@@ -342,7 +342,7 @@ If you execute an ``UPDATE``, ``INSERT`` or ``DELETE`` query the command will re
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "update dogs set age = 5 where name = 'Cleo'"
+    duckdb-utils cats.duckdb "update cats set age = 5 where name = 'Emme'"
 
 .. code-block:: output
 
@@ -359,7 +359,7 @@ This example defines a function which extracts the domain from a URL:
 
 .. code-block:: bash
 
-    sqlite-utils query sites.db "select url, domain(url) from urls" --functions '
+    duckdb-utils query sites.duckdb "select url, domain(url) from urls" --functions '
     from urllib.parse import urlparse
 
     def domain(url):
@@ -370,14 +370,14 @@ Every callable object defined in the block will be registered as a SQL function 
 
 .. _cli_query_extensions:
 
-SQLite extensions
+DuckDB extensions
 -----------------
 
-You can load SQLite extension modules using the ``--load-extension`` option, see :ref:`cli_load_extension`.
+You can load DuckDB extension modules using the ``--load-extension`` option, see :ref:`cli_load_extension`.
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db "select spatialite_version()" --load-extension=spatialite
+    duckdb-utils cats.duckdb "select spatialite_version()" --load-extension=spatialite
 
 .. code-block:: output
 
@@ -388,16 +388,16 @@ You can load SQLite extension modules using the ``--load-extension`` option, see
 Attaching additional databases
 ------------------------------
 
-SQLite supports cross-database SQL queries, which can join data from tables in more than one database file.
+DuckDB supports cross-database SQL queries, which can join data from tables in more than one database file.
 
-You can attach one or more additional databases using the ``--attach`` option, providing an alias to use for that database and the path to the SQLite file on disk.
+You can attach one or more additional databases using the ``--attach`` option, providing an alias to use for that database and the path to the DuckDB file on disk.
 
-This example attaches the ``books.db`` database under the alias ``books`` and then runs a query that combines data from that database with the default ``dogs.db`` database:
+This example attaches the ``books.duckdb`` database under the alias ``books`` and then runs a query that combines data from that database with the default ``cats.duckdb`` database:
 
 .. code-block:: bash
 
-    sqlite-utils dogs.db --attach books books.db \
-       'select * from sqlite_master union all select * from books.sqlite_master'
+    duckdb-utils cats.duckdb --attach books books.duckdb \
+       'select * from duckdb_master union all select * from books.duckdb_master'
 
 .. note::
     In Python: :ref:`db.attach() <python_api_attach>`
@@ -407,39 +407,39 @@ This example attaches the ``books.db`` database under the alias ``books`` and th
 Querying data directly using an in-memory database
 ==================================================
 
-The ``sqlite-utils memory`` command works similar to ``sqlite-utils query``, but allows you to execute queries against an in-memory database.
+The ``duckdb-utils memory`` command works similar to ``duckdb-utils query``, but allows you to execute queries against an in-memory database.
 
-You can also pass this command CSV or JSON files which will be loaded into a temporary in-memory table, allowing you to execute SQL against that data without a separate step to first convert it to SQLite.
+You can also pass this command CSV or JSON files which will be loaded into a temporary in-memory table, allowing you to execute SQL against that data without a separate step to first convert it to DuckDB.
 
 Without any extra arguments, this command executes SQL against the in-memory database directly:
 
 .. code-block:: bash
 
-    sqlite-utils memory 'select sqlite_version()'
+    duckdb-utils memory 'select duckdb_version()'
 
 .. code-block:: output
 
-    [{"sqlite_version()": "3.35.5"}]
+    [{"duckdb_version()": "3.35.5"}]
 
-It takes all of the same output formatting options as :ref:`sqlite-utils query <cli_query>`: ``--csv`` and ``--csv`` and ``--table`` and ``--nl``:
+It takes all of the same output formatting options as :ref:`duckdb-utils query <cli_query>`: ``--csv`` and ``--csv`` and ``--table`` and ``--nl``:
 
 .. code-block:: bash
 
-    sqlite-utils memory 'select sqlite_version()' --csv
+    duckdb-utils memory 'select duckdb_version()' --csv
 
 .. code-block:: output
 
-    sqlite_version()
+    duckdb_version()
     3.35.5
 
 .. code-block:: bash
 
-    sqlite-utils memory 'select sqlite_version()' --fmt grid
+    duckdb-utils memory 'select duckdb_version()' --fmt grid
 
 .. code-block:: output
 
     +--------------------+
-    | sqlite_version()   |
+    | duckdb_version()   |
     +====================+
     | 3.35.5             |
     +--------------------+
@@ -449,20 +449,20 @@ It takes all of the same output formatting options as :ref:`sqlite-utils query <
 Running queries directly against CSV or JSON
 --------------------------------------------
 
-If you have data in CSV or JSON format you can load it into an in-memory SQLite database and run queries against it directly in a single command using ``sqlite-utils memory`` like this:
+If you have data in CSV or JSON format you can load it into an in-memory DuckDB database and run queries against it directly in a single command using ``duckdb-utils memory`` like this:
 
 .. code-block:: bash
 
-    sqlite-utils memory data.csv "select * from data"
+    duckdb-utils memory data.csv "select * from data"
 
 You can pass multiple files to the command if you want to run joins between data from different files:
 
 .. code-block:: bash
 
-    sqlite-utils memory one.csv two.json \
+    duckdb-utils memory one.csv two.json \
       "select * from one join two on one.id = two.other_id"
 
-If your data is JSON it should be the same format supported by the :ref:`sqlite-utils insert command <cli_inserting_data>` - so either a single JSON object (treated as a single row) or a list of JSON objects.
+If your data is JSON it should be the same format supported by the :ref:`duckdb-utils insert command <cli_inserting_data>` - so either a single JSON object (treated as a single row) or a list of JSON objects.
 
 CSV data can be comma- or tab- delimited.
 
@@ -470,25 +470,25 @@ The in-memory tables will be named after the files without their extensions. The
 
 .. code-block:: bash
 
-    sqlite-utils memory example.csv "select * from t"
+    duckdb-utils memory example.csv "select * from t"
 
 If two files have the same name they will be assigned a numeric suffix:
 
 .. code-block:: bash
 
-    sqlite-utils memory foo/data.csv bar/data.csv "select * from data_2"
+    duckdb-utils memory foo/data.csv bar/data.csv "select * from data_2"
 
 To read from standard input, use either ``-`` or ``stdin`` as the filename - then use ``stdin`` or ``t`` or ``t1`` as the table name:
 
 .. code-block:: bash
 
-    cat example.csv | sqlite-utils memory - "select * from stdin"
+    cat example.csv | duckdb-utils memory - "select * from stdin"
 
 Incoming CSV data will be assumed to use ``utf-8``. If your data uses a different character encoding you can specify that with ``--encoding``:
 
 .. code-block:: bash
 
-    cat example.csv | sqlite-utils memory - "select * from stdin" --encoding=latin-1
+    cat example.csv | duckdb-utils memory - "select * from stdin" --encoding=latin-1
 
 If you are joining across multiple CSV files they must all use the same encoding.
 
@@ -499,13 +499,13 @@ Column types will be automatically detected in CSV or TSV data, using the same m
 Explicitly specifying the format
 --------------------------------
 
-By default, ``sqlite-utils memory`` will attempt to detect the incoming data format (JSON, TSV or CSV) automatically.
+By default, ``duckdb-utils memory`` will attempt to detect the incoming data format (JSON, TSV or CSV) automatically.
 
 You can instead specify an explicit format by adding a ``:csv``, ``:tsv``, ``:json`` or ``:nl`` (for newline-delimited JSON) suffix to the filename. For example:
 
 .. code-block:: bash
     
-    sqlite-utils memory one.dat:csv two.dat:nl \
+    duckdb-utils memory one.dat:csv two.dat:nl \
       "select * from one union select * from two"
 
 Here the contents of ``one.dat`` will be treated as CSV and the contents of ``two.dat`` will be treated as newline-delimited JSON.
@@ -514,21 +514,21 @@ To explicitly specify the format for data piped into the tool on standard input,
 
 .. code-block:: bash
 
-    cat one.dat | sqlite-utils memory stdin:csv "select * from stdin"
+    cat one.dat | duckdb-utils memory stdin:csv "select * from stdin"
 
 .. _cli_memory_attach:
 
 Joining in-memory data against existing databases using \-\-attach
 ------------------------------------------------------------------
 
-The :ref:`attach option <cli_query_attach>` can be used to attach database files to the in-memory connection, enabling joins between in-memory data loaded from a file and tables in existing SQLite database files. An example:
+The :ref:`attach option <cli_query_attach>` can be used to attach database files to the in-memory connection, enabling joins between in-memory data loaded from a file and tables in existing DuckDB database files. An example:
 
 .. code-block:: bash
 
-    echo "id\n1\n3\n5" | sqlite-utils memory - --attach trees trees.db \
+    echo "id\n1\n3\n5" | duckdb-utils memory - --attach trees trees.duckdb \
       "select * from trees.trees where rowid in (select id from stdin)"
 
-Here the ``--attach trees trees.db`` option makes the ``trees.db`` database available with an alias of ``trees``.
+Here the ``--attach trees trees.duckdb`` option makes the ``trees.duckdb`` database available with an alias of ``trees``.
 
 ``select * from trees.trees where ...`` can then query the ``trees`` table in that database.
 
@@ -543,27 +543,27 @@ To see the in-memory database schema that would be used for a file or for multip
 
 .. code-block:: bash
 
-    sqlite-utils memory dogs.csv --schema
+    duckdb-utils memory cats.csv --schema
 
 .. code-block:: output
 
-    CREATE TABLE [dogs] (
+    CREATE TABLE [cats] (
         [id] INTEGER,
         [age] INTEGER,
         [name] TEXT
     );
-    CREATE VIEW t1 AS select * from [dogs];
-    CREATE VIEW t AS select * from [dogs];
+    CREATE VIEW t1 AS select * from [cats];
+    CREATE VIEW t AS select * from [cats];
 
 You can run the equivalent of the :ref:`analyze-tables <cli_analyze_tables>` command using ``--analyze``:
 
 .. code-block:: bash
 
-    sqlite-utils memory dogs.csv --analyze
+    duckdb-utils memory cats.csv --analyze
 
 .. code-block:: output
 
-    dogs.id: (1/3)
+    cats.id: (1/3)
 
       Total rows: 2
       Null rows: 0
@@ -571,7 +571,7 @@ You can run the equivalent of the :ref:`analyze-tables <cli_analyze_tables>` com
 
       Distinct values: 2
 
-    dogs.name: (2/3)
+    cats.name: (2/3)
 
       Total rows: 2
       Null rows: 0
@@ -579,7 +579,7 @@ You can run the equivalent of the :ref:`analyze-tables <cli_analyze_tables>` com
 
       Distinct values: 2
 
-    dogs.age: (3/3)
+    cats.age: (3/3)
 
       Total rows: 2
       Null rows: 0
@@ -591,29 +591,29 @@ You can output SQL that will both create the tables and insert the full data use
 
 .. code-block:: bash
 
-    sqlite-utils memory dogs.csv --dump
+    duckdb-utils memory cats.csv --dump
 
 .. code-block:: output
 
     BEGIN TRANSACTION;
-    CREATE TABLE [dogs] (
+    CREATE TABLE [cats] (
         [id] INTEGER,
         [age] INTEGER,
         [name] TEXT
     );
-    INSERT INTO "dogs" VALUES('1','4','Cleo');
-    INSERT INTO "dogs" VALUES('2','2','Pancakes');
-    CREATE VIEW t1 AS select * from [dogs];
-    CREATE VIEW t AS select * from [dogs];
+    INSERT INTO "cats" VALUES('1','4','Emme');
+    INSERT INTO "cats" VALUES('2','2','Pancakes');
+    CREATE VIEW t1 AS select * from [cats];
+    CREATE VIEW t AS select * from [cats];
     COMMIT;
 
-Passing ``--save other.db`` will instead use that SQL to populate a new database file:
+Passing ``--save other.duckdb`` will instead use that SQL to populate a new database file:
 
 .. code-block:: bash
 
-    sqlite-utils memory dogs.csv --save dogs.db
+    duckdb-utils memory cats.csv --save cats.duckdb
 
-These features are mainly intended as debugging tools - for much more finely grained control over how data is inserted into a SQLite database file see :ref:`cli_inserting_data` and :ref:`cli_insert_csv_tsv`.
+These features are mainly intended as debugging tools - for much more finely grained control over how data is inserted into a DuckDB database file see :ref:`cli_inserting_data` and :ref:`cli_insert_csv_tsv`.
 
 .. _cli_rows:
 
@@ -624,11 +624,11 @@ You can return every row in a specified table using the ``rows`` command:
 
 .. code-block:: bash
 
-    sqlite-utils rows dogs.db dogs
+    duckdb-utils rows cats.duckdb cats
 
 .. code-block:: output
 
-    [{"id": 1, "age": 4, "name": "Cleo"},
+    [{"id": 1, "age": 4, "name": "Emme"},
      {"id": 2, "age": 2, "name": "Pancakes"}]
 
 This command accepts the same output options as ``query`` - so you can pass ``--nl``, ``--csv``, ``--tsv``, ``--no-headers``, ``--table`` and ``--fmt``.
@@ -637,39 +637,39 @@ You can use the ``-c`` option to specify a subset of columns to return:
 
 .. code-block:: bash
 
-    sqlite-utils rows dogs.db dogs -c age -c name
+    duckdb-utils rows cats.duckdb cats -c age -c name
 
 .. code-block:: output
 
-    [{"age": 4, "name": "Cleo"},
+    [{"age": 4, "name": "Emme"},
      {"age": 2, "name": "Pancakes"}]
 
 You can filter rows using a where clause with the ``--where`` option:
 
 .. code-block:: bash
 
-    sqlite-utils rows dogs.db dogs -c name --where 'name = "Cleo"'
+    duckdb-utils rows cats.duckdb cats -c name --where 'name = "Emme"'
 
 .. code-block:: output
 
-    [{"name": "Cleo"}]
+    [{"name": "Emme"}]
 
 Or pass named parameters using ``--where`` in combination with ``-p``:
 
 .. code-block:: bash
 
-    sqlite-utils rows dogs.db dogs -c name --where 'name = :name' -p name Cleo
+    duckdb-utils rows cats.duckdb cats -c name --where 'name = :name' -p name Emme
 
 .. code-block:: output
 
-    [{"name": "Cleo"}]
+    [{"name": "Emme"}]
 
 You can define a sort order using ``--order column`` or ``--order 'column desc'``.
 
 Use ``--limit N`` to only return the first ``N`` rows. Use ``--offset N`` to return rows starting from the specified offset.
 
 .. note::
-    In Python: :ref:`table.rows <python_api_rows>`  CLI reference: :ref:`sqlite-utils rows <cli_ref_rows>`
+    In Python: :ref:`table.rows <python_api_rows>`  CLI reference: :ref:`duckdb-utils rows <cli_ref_rows>`
 
 .. _cli_tables:
 
@@ -680,31 +680,31 @@ You can list the names of tables in a database using the ``tables`` command:
 
 .. code-block:: bash
 
-    sqlite-utils tables mydb.db
+    duckdb-utils tables mydb.duckdb
 
 .. code-block:: output
 
-    [{"table": "dogs"},
+    [{"table": "cats"},
      {"table": "cats"},
-     {"table": "chickens"}]
+     {"table": "seagulls"}]
 
 You can output this list in CSV using the ``--csv`` or ``--tsv`` options:
 
 .. code-block:: bash
 
-    sqlite-utils tables mydb.db --csv --no-headers
+    duckdb-utils tables mydb.duckdb --csv --no-headers
 
 .. code-block:: output
 
-    dogs
     cats
-    chickens
+    cats
+    seagulls
 
 If you just want to see the FTS4 tables, you can use ``--fts4`` (or ``--fts5`` for FTS5 tables):
 
 .. code-block:: bash
 
-    sqlite-utils tables docs.db --fts4
+    duckdb-utils tables docs.duckdb --fts4
 
 .. code-block:: output
 
@@ -714,31 +714,31 @@ Use ``--counts`` to include a count of the number of rows in each table:
 
 .. code-block:: bash
 
-    sqlite-utils tables mydb.db --counts
+    duckdb-utils tables mydb.duckdb --counts
 
 .. code-block:: output
 
-    [{"table": "dogs", "count": 12},
+    [{"table": "cats", "count": 12},
      {"table": "cats", "count": 332},
-     {"table": "chickens", "count": 9}]
+     {"table": "seagulls", "count": 9}]
 
 Use ``--columns`` to include a list of columns in each table:
 
 .. code-block:: bash
 
-    sqlite-utils tables dogs.db --counts --columns
+    duckdb-utils tables cats.duckdb --counts --columns
 
 .. code-block:: output
 
     [{"table": "Gosh", "count": 0, "columns": ["c1", "c2", "c3"]},
      {"table": "Gosh2", "count": 0, "columns": ["c1", "c2", "c3"]},
-     {"table": "dogs", "count": 2, "columns": ["id", "age", "name"]}]
+     {"table": "cats", "count": 2, "columns": ["id", "age", "name"]}]
 
 Use ``--schema`` to include the schema of each table:
 
 .. code-block:: bash
 
-    sqlite-utils tables dogs.db --schema --table
+    duckdb-utils tables cats.duckdb --schema --table
 
 .. code-block:: output
 
@@ -746,7 +746,7 @@ Use ``--schema`` to include the schema of each table:
     -------  -----------------------------------------------
     Gosh     CREATE TABLE Gosh (c1 text, c2 text, c3 text)
     Gosh2    CREATE TABLE Gosh2 (c1 text, c2 text, c3 text)
-    dogs     CREATE TABLE [dogs] (
+    cats     CREATE TABLE [cats] (
                [id] INTEGER,
                [age] INTEGER,
                [name] TEXT)
@@ -754,7 +754,7 @@ Use ``--schema`` to include the schema of each table:
 The ``--nl``, ``--csv``, ``--tsv``, ``--table`` and ``--fmt`` options are also available.
 
 .. note::
-    In Python: :ref:`db.tables or db.table_names() <python_api_tables>`  CLI reference: :ref:`sqlite-utils tables <cli_ref_tables>`
+    In Python: :ref:`db.tables or db.table_names() <python_api_tables>`  CLI reference: :ref:`duckdb-utils tables <cli_ref_tables>`
 
 .. _cli_views:
 
@@ -765,14 +765,14 @@ The ``views`` command shows any views defined in the database:
 
 .. code-block:: bash
 
-    sqlite-utils views sf-trees.db --table --counts --columns --schema
+    duckdb-utils views sf-trees.duckdb --table --counts --columns --schema
 
 .. code-block:: output
 
     view         count  columns               schema
     ---------  -------  --------------------  --------------------------------------------------------------
     demo_view   189144  ['qSpecies']          CREATE VIEW demo_view AS select qSpecies from Street_Tree_List
-    hello            1  ['sqlite_version()']  CREATE VIEW hello as select sqlite_version()
+    hello            1  ['duckdb_version()']  CREATE VIEW hello as select duckdb_version()
 
 It takes the same options as the ``tables`` command:
 
@@ -785,7 +785,7 @@ It takes the same options as the ``tables`` command:
 * ``--table``
 
 .. note::
-    In Python: :ref:`db.views or db.view_names() <python_api_views>`  CLI reference: :ref:`sqlite-utils views <cli_ref_views>`
+    In Python: :ref:`db.views or db.view_names() <python_api_views>`  CLI reference: :ref:`duckdb-utils views <cli_ref_views>`
 
 .. _cli_indexes:
 
@@ -796,7 +796,7 @@ The ``indexes`` command lists any indexes configured for the database:
 
 .. code-block:: bash
 
-    sqlite-utils indexes covid.db --table
+    duckdb-utils indexes covid.duckdb --table
 
 .. code-block:: output
 
@@ -815,14 +815,14 @@ It shows indexes across all tables. To see indexes for specific tables, list tho
 
 .. code-block:: bash
 
-    sqlite-utils indexes covid.db johns_hopkins_csse_daily_reports --table
+    duckdb-utils indexes covid.duckdb johns_hopkins_csse_daily_reports --table
 
 The command defaults to only showing the columns that are explicitly part of the index. To also include auxiliary columns use the ``--aux`` option - these columns will be listed with a ``key`` of ``0``.
 
 The command takes the same format options as the ``tables`` and ``views`` commands.
 
 .. note::
-    In Python: :ref:`table.indexes <python_api_introspection_indexes>`  CLI reference: :ref:`sqlite-utils indexes <cli_ref_indexes>`
+    In Python: :ref:`table.indexes <python_api_introspection_indexes>`  CLI reference: :ref:`duckdb-utils indexes <cli_ref_indexes>`
 
 .. _cli_triggers:
 
@@ -833,7 +833,7 @@ The ``triggers`` command shows any triggers configured for the database:
 
 .. code-block:: bash
 
-    sqlite-utils triggers global-power-plants.db --table
+    duckdb-utils triggers global-power-plants.duckdb --table
 
 .. code-block:: output
 
@@ -855,27 +855,27 @@ It defaults to showing triggers for all tables. To see triggers for one or more 
 
 .. code-block:: bash
 
-    sqlite-utils triggers global-power-plants.db plants
+    duckdb-utils triggers global-power-plants.duckdb plants
 
 The command takes the same format options as the ``tables`` and ``views`` commands.
 
 .. note::
-    In Python: :ref:`table.triggers or db.triggers <python_api_introspection_triggers>`  CLI reference: :ref:`sqlite-utils triggers <cli_ref_triggers>`
+    In Python: :ref:`table.triggers or db.triggers <python_api_introspection_triggers>`  CLI reference: :ref:`duckdb-utils triggers <cli_ref_triggers>`
 
 .. _cli_schema:
 
 Showing the schema
 ==================
 
-The ``sqlite-utils schema`` command shows the full SQL schema for the database:
+The ``duckdb-utils schema`` command shows the full SQL schema for the database:
 
 .. code-block:: bash
 
-    sqlite-utils schema dogs.db
+    duckdb-utils schema cats.duckdb
 
 .. code-block:: output
 
-    CREATE TABLE "dogs" (
+    CREATE TABLE "cats" (
         [id] INTEGER PRIMARY KEY,
         [name] TEXT
     );
@@ -884,23 +884,23 @@ This will show the schema for every table and index in the database. To view the
 
 .. code-block:: bash
 
-    sqlite-utils schema dogs.db dogs chickens
+    duckdb-utils schema cats.duckdb cats seagulls
 
 .. note::
-    In Python: :ref:`table.schema <python_api_introspection_schema>` or :ref:`db.schema <python_api_schema>`  CLI reference: :ref:`sqlite-utils schema <cli_ref_schema>`
+    In Python: :ref:`table.schema <python_api_introspection_schema>` or :ref:`db.schema <python_api_schema>`  CLI reference: :ref:`duckdb-utils schema <cli_ref_schema>`
 
 .. _cli_analyze_tables:
 
 Analyzing tables
 ================
 
-When working with a new database it can be useful to get an idea of the shape of the data. The ``sqlite-utils analyze-tables`` command inspects specified tables (or all tables) and calculates some useful details about each of the columns in those tables.
+When working with a new database it can be useful to get an idea of the shape of the data. The ``duckdb-utils analyze-tables`` command inspects specified tables (or all tables) and calculates some useful details about each of the columns in those tables.
 
-To inspect the ``tags`` table in the ``github.db`` database, run the following:
+To inspect the ``tags`` table in the ``github.duckdb`` database, run the following:
 
 .. code-block:: bash
 
-    sqlite-utils analyze-tables github.db tags
+    duckdb-utils analyze-tables github.duckdb tags
 
 .. code-block:: output
 
@@ -954,19 +954,19 @@ If you do not specify any tables every table in the database will be analyzed:
 
 .. code-block:: bash
 
-    sqlite-utils analyze-tables github.db
+    duckdb-utils analyze-tables github.duckdb
 
 If you wish to analyze one or more specific columns, use the ``-c`` option:
 
 .. code-block:: bash
 
-    sqlite-utils analyze-tables github.db tags -c sha
+    duckdb-utils analyze-tables github.duckdb tags -c sha
 
 To show more than 10 common values, use ``--common-limit 20``.  To skip the most common or least common value analysis, use ``--no-most`` or ``--no-least``:
 
 .. code-block:: bash
 
-    sqlite-utils analyze-tables github.db tags --common-limit 20 --no-least
+    duckdb-utils analyze-tables github.duckdb tags --common-limit 20 --no-least
 
 .. _cli_analyze_tables_save:
 
@@ -977,7 +977,7 @@ Saving the analyzed table details
 
 .. code-block:: bash
 
-    sqlite-utils analyze-tables github.db --save
+    duckdb-utils analyze-tables github.duckdb --save
 
 The ``_analyze_tables_`` table has the following schema:
 
@@ -1021,32 +1021,32 @@ You can create a new empty database file using the ``create-database`` command:
 
 .. code-block:: bash
 
-    sqlite-utils create-database empty.db
+    duckdb-utils create-database empty.duckdb
 
 To enable :ref:`cli_wal` on the newly created database add the ``--enable-wal`` option:
 
 .. code-block:: bash
 
-    sqlite-utils create-database empty.db --enable-wal
+    duckdb-utils create-database empty.duckdb --enable-wal
 
 To enable SpatiaLite metadata on a newly created database, add the ``--init-spatialite`` flag:
 
 .. code-block:: bash
 
-    sqlite-utils create-database empty.db --init-spatialite
+    duckdb-utils create-database empty.duckdb --init-spatialite
 
 That will look for SpatiaLite in a set of predictable locations. To load it from somewhere else, use the ``--load-extension`` option:
 
 .. code-block:: bash
 
-    sqlite-utils create-database empty.db --init-spatialite --load-extension /path/to/spatialite.so
+    duckdb-utils create-database empty.duckdb --init-spatialite --load-extension /path/to/spatialite.so
 
 .. _cli_inserting_data:
 
 Inserting JSON data
 ===================
 
-If you have data as JSON, you can use ``sqlite-utils insert tablename`` to insert it into a database. The table will be created with the correct (automatically detected) columns if it does not already exist.
+If you have data as JSON, you can use ``duckdb-utils insert tablename`` to insert it into a database. The table will be created with the correct (automatically detected) columns if it does not already exist.
 
 You can pass in a single JSON object or a list of JSON objects, either as a filename or piped directly to standard-in (by using ``-`` as the filename).
 
@@ -1054,20 +1054,20 @@ Here's the simplest possible example:
 
 .. code-block:: bash
 
-    echo '{"name": "Cleo", "age": 4}' | sqlite-utils insert dogs.db dogs -
+    echo '{"name": "Emme", "age": 4}' | duckdb-utils insert cats.duckdb cats -
 
 To specify a column as the primary key, use ``--pk=column_name``.
 
 To create a compound primary key across more than one column, use ``--pk`` multiple times.
 
-If you feed it a JSON list it will insert multiple records. For example, if ``dogs.json`` looks like this:
+If you feed it a JSON list it will insert multiple records. For example, if ``cats.json`` looks like this:
 
 .. code-block:: json
 
     [
         {
             "id": 1,
-            "name": "Cleo",
+            "name": "Emme",
             "age": 4
         },
         {
@@ -1082,23 +1082,23 @@ If you feed it a JSON list it will insert multiple records. For example, if ``do
         }
     ]
 
-You can import all three records into an automatically created ``dogs`` table and set the ``id`` column as the primary key like so:
+You can import all three records into an automatically created ``cats`` table and set the ``id`` column as the primary key like so:
 
 .. code-block:: bash
 
-    sqlite-utils insert dogs.db dogs dogs.json --pk=id
+    duckdb-utils insert cats.duckdb cats cats.json --pk=id
 
 You can skip inserting any records that have a primary key that already exists using ``--ignore``:
 
 .. code-block:: bash
 
-    sqlite-utils insert dogs.db dogs dogs.json --ignore
+    duckdb-utils insert cats.duckdb cats cats.json --ignore
 
 You can delete all the existing rows in the table before inserting the new records using ``--truncate``:
 
 .. code-block:: bash
 
-    sqlite-utils insert dogs.db dogs dogs.json --truncate
+    duckdb-utils insert cats.duckdb cats cats.json --truncate
 
 You can add the ``--analyze`` option to run ``ANALYZE`` against the table after the rows have been inserted.
 
@@ -1130,31 +1130,31 @@ You can also import `newline-delimited JSON <http://ndjson.org/>`__ using the ``
 
 .. code-block:: bash
 
-    echo '{"id": 1, "name": "Cleo"}
-    {"id": 2, "name": "Suna"}' | sqlite-utils insert creatures.db creatures - --nl
+    echo '{"id": 1, "name": "Emme"}
+    {"id": 2, "name": "Suna"}' | duckdb-utils insert creatures.duckdb creatures - --nl
 
 Newline-delimited JSON consists of full JSON objects separated by newlines.
 
 If you are processing data using ``jq`` you can use the ``jq -c`` option to output valid newline-delimited JSON.
 
-Since `Datasette <https://datasette.io/>`__ can export newline-delimited JSON, you can combine the Datasette and ``sqlite-utils`` like so:
+Since `Datasette <https://databooth.com.au/>`__ can export newline-delimited JSON, you can combine the Datasette and ``duckdb-utils`` like so:
 
 .. code-block:: bash
 
-    curl -L "https://latest.datasette.io/fixtures/facetable.json?_shape=array&_nl=on" \
-        | sqlite-utils insert nl-demo.db facetable - --pk=id --nl
+    curl -L "https://latest.databooth.com.au/fixtures/facetable.json?_shape=array&_nl=on" \
+        | duckdb-utils insert nl-demo.duckdb facetable - --pk=id --nl
 
-You can also pipe ``sqlite-utils`` together to create a new SQLite database file containing the results of a SQL query against another database:
+You can also pipe ``duckdb-utils`` together to create a new DuckDB database file containing the results of a SQL query against another database:
 
 .. code-block:: bash
 
-    sqlite-utils sf-trees.db \
+    duckdb-utils sf-trees.duckdb \
         "select TreeID, qAddress, Latitude, Longitude from Street_Tree_List" --nl \
-      | sqlite-utils insert saved.db trees - --nl
+      | duckdb-utils insert saved.duckdb trees - --nl
     
 .. code-block:: bash
 
-    sqlite-utils saved.db "select * from trees limit 5" --csv
+    duckdb-utils saved.duckdb "select * from trees limit 5" --csv
 
 .. code-block:: output
 
@@ -1170,7 +1170,7 @@ You can also pipe ``sqlite-utils`` together to create a new SQLite database file
 Flattening nested JSON objects
 ------------------------------
 
-``sqlite-utils insert`` and ``sqlite-utils memory`` both expect incoming JSON data to consist of an array of JSON objects, where the top-level keys of each object will become columns in the created database table.
+``duckdb-utils insert`` and ``duckdb-utils memory`` both expect incoming JSON data to consist of an array of JSON objects, where the top-level keys of each object will become columns in the created database table.
 
 If your data is nested you can use the ``--flatten`` option to create columns that are derived from the nested data.
 
@@ -1191,7 +1191,7 @@ Consider this example document, in a file called ``log.json``:
         }
     }
 
-Inserting this into a table using ``sqlite-utils insert logs.db logs log.json`` will create a table with the following schema:
+Inserting this into a table using ``duckdb-utils insert logs.duckdb logs log.json`` will create a table with the following schema:
 
 .. code-block:: sql
 
@@ -1201,7 +1201,7 @@ Inserting this into a table using ``sqlite-utils insert logs.db logs log.json`` 
        [labels] TEXT
     );
 
-With the ``--flatten`` option columns will be created using ``topkey_nextkey`` column names - so running ``sqlite-utils insert logs.db logs log.json --flatten`` will create the following schema instead:
+With the ``--flatten`` option columns will be created using ``topkey_nextkey`` column names - so running ``duckdb-utils insert logs.duckdb logs log.json --flatten`` will create the following schema instead:
 
 .. code-block:: sql
 
@@ -1223,25 +1223,25 @@ If your data is in CSV format, you can insert it using the ``--csv`` option:
 
 .. code-block:: bash
 
-    sqlite-utils insert dogs.db dogs dogs.csv --csv
+    duckdb-utils insert cats.duckdb cats cats.csv --csv
 
 For tab-delimited data, use ``--tsv``:
 
 .. code-block:: bash
 
-    sqlite-utils insert dogs.db dogs dogs.tsv --tsv
+    duckdb-utils insert cats.duckdb cats cats.tsv --tsv
 
 Data is expected to be encoded as Unicode UTF-8. If your data is an another character encoding you can specify it using the ``--encoding`` option:
 
 .. code-block:: bash
 
-    sqlite-utils insert dogs.db dogs dogs.tsv --tsv --encoding=latin-1
+    duckdb-utils insert cats.duckdb cats cats.tsv --tsv --encoding=latin-1
 
 To stop inserting after a specified number of records - useful for getting a faster preview of a large file - use the ``--stop-after`` option:
 
 .. code-block:: bash
 
-    sqlite-utils insert dogs.db dogs dogs.csv --csv --stop-after=10
+    duckdb-utils insert cats.duckdb cats cats.csv --csv --stop-after=10
 
 A progress bar is displayed when inserting data from a file. You can hide the progress bar using the ``--silent`` option.
 
@@ -1252,20 +1252,20 @@ For example, given a ``creatures.csv`` file containing this:
 .. code-block::
 
     name,age,weight
-    Cleo,6,45.5
+    Emme,6,45.5
     Dori,1,3.5
 
 The following command:
 
 .. code-block:: bash
 
-    sqlite-utils insert creatures.db creatures creatures.csv --csv --detect-types
+    duckdb-utils insert creatures.duckdb creatures creatures.csv --csv --detect-types
 
 Will produce this schema:
 
 .. code-block:: bash
 
-    sqlite-utils schema creatures.db
+    duckdb-utils schema creatures.duckdb
 
 .. code-block:: output
 
@@ -1275,27 +1275,27 @@ Will produce this schema:
        [weight] FLOAT
     );
 
-You can set the ``SQLITE_UTILS_DETECT_TYPES`` environment variable if you want ``--detect-types`` to be the default behavior:
+You can set the ``duckdb_UTILS_DETECT_TYPES`` environment variable if you want ``--detect-types`` to be the default behavior:
 
 .. code-block:: bash
 
-    export SQLITE_UTILS_DETECT_TYPES=1
+    export duckdb_UTILS_DETECT_TYPES=1
 
 If a CSV or TSV file includes empty cells, like this one:
 
 .. code-block:: csv
 
     name,age,weight
-    Cleo,6,
+    Emme,6,
     Dori,,3.5
 
-They will be imported into SQLite as empty string values, ``""``.
+They will be imported into DuckDB as empty string values, ``""``.
 
 To import them as ``NULL`` values instead, use the ``--empty-null`` option:
 
 .. code-block:: bash
 
-    sqlite-utils insert creatures.db creatures creatures.csv --csv --empty-null
+    duckdb-utils insert creatures.duckdb creatures creatures.csv --csv --empty-null
 
 .. _cli_insert_csv_tsv_delimiter:
 
@@ -1308,21 +1308,21 @@ The ``--sniff`` option can be used to attempt to detect the delimiters:
 
 .. code-block:: bash
 
-    sqlite-utils insert dogs.db dogs dogs.csv --sniff
+    duckdb-utils insert cats.duckdb cats cats.csv --sniff
 
 Alternatively, you can specify them using the ``--delimiter`` and ``--quotechar`` options.
 
 Here's a CSV file that uses ``;`` for delimiters and the ``|`` symbol for quote characters::
 
     name;description
-    Cleo;|Very fine; a friendly dog|
+    Emme;|Very fine; a friendly dog|
     Pancakes;A local corgi
 
 You can import that using:
 
 .. code-block:: bash
 
-    sqlite-utils insert dogs.db dogs dogs.csv --delimiter=";" --quotechar="|"
+    duckdb-utils insert cats.duckdb cats cats.csv --delimiter=";" --quotechar="|"
 
 Passing ``--delimiter``, ``--quotechar`` or ``--sniff`` implies ``--csv``, so you can omit the ``--csv`` option.
 
@@ -1335,18 +1335,18 @@ The first row of any CSV or TSV file is expected to contain the names of the col
 
 If your file does not include this row, you can use the ``--no-headers`` option to specify that the tool should not use that fist row as headers.
 
-If you do this, the table will be created with column names called ``untitled_1`` and ``untitled_2`` and so on. You can then rename them using the ``sqlite-utils transform ... --rename`` command, see :ref:`cli_transform_table`.
+If you do this, the table will be created with column names called ``untitled_1`` and ``untitled_2`` and so on. You can then rename them using the ``duckdb-utils transform ... --rename`` command, see :ref:`cli_transform_table`.
 
 .. _cli_insert_unstructured:
 
 Inserting unstructured data with \-\-lines and \-\-text
 =======================================================
 
-If you have an unstructured file you can insert its contents into a table with a single ``line`` column containing each line from the file using ``--lines``. This can be useful if you intend to further analyze those lines using SQL string functions or :ref:`sqlite-utils convert <cli_convert>`:
+If you have an unstructured file you can insert its contents into a table with a single ``line`` column containing each line from the file using ``--lines``. This can be useful if you intend to further analyze those lines using SQL string functions or :ref:`duckdb-utils convert <cli_convert>`:
 
 .. code-block:: bash
 
-    sqlite-utils insert logs.db loglines logfile.log --lines
+    duckdb-utils insert logs.duckdb loglines logfile.log --lines
 
 This will produce the following schema:
 
@@ -1360,7 +1360,7 @@ You can also insert the entire contents of the file into a single column called 
 
 .. code-block:: bash
 
-    sqlite-utils insert content.db content file.txt --text
+    duckdb-utils insert content.duckdb content file.txt --text
 
 The schema here will be:
 
@@ -1375,16 +1375,16 @@ The schema here will be:
 Applying conversions while inserting data
 =========================================
 
-The ``--convert`` option can be used to apply a Python conversion function to imported data before it is inserted into the database. It works in a similar way to :ref:`sqlite-utils convert <cli_convert>`.
+The ``--convert`` option can be used to apply a Python conversion function to imported data before it is inserted into the database. It works in a similar way to :ref:`duckdb-utils convert <cli_convert>`.
 
 Your Python function will be passed a dictionary called ``row`` for each item that is being imported. You can modify that dictionary and return it - or return a fresh dictionary - to change the data that will be inserted.
 
-Given a JSON file called ``dogs.json`` containing this:
+Given a JSON file called ``cats.json`` containing this:
 
 .. code-block:: json
 
     [
-        {"id": 1, "name": "Cleo"},
+        {"id": 1, "name": "Emme"},
         {"id": 2, "name": "Pancakes"}
     ]
 
@@ -1392,11 +1392,11 @@ The following command will insert that data and add an ``is_good`` column set to
 
 .. code-block:: bash
 
-    sqlite-utils insert dogs.db dogs dogs.json --convert 'row["is_good"] = 1'
+    duckdb-utils insert cats.duckdb cats cats.json --convert 'row["is_good"] = 1'
 
 The ``--convert`` option also works with the ``--csv``, ``--tsv`` and ``--nl`` insert options.
 
-As with ``sqlite-utils convert`` you can use ``--import`` to import additional Python modules, see :ref:`cli_convert_import` for details.
+As with ``duckdb-utils convert`` you can use ``--import`` to import additional Python modules, see :ref:`cli_convert_import` for details.
 
 You can also pass code that runs some initialization steps and defines a ``convert(value)`` function, see :ref:`cli_convert_complex`.
 
@@ -1416,7 +1416,7 @@ You could convert it into structured data like so:
 
 .. code-block:: bash
 
-    sqlite-utils insert logs.db loglines access.log --convert '
+    duckdb-utils insert logs.duckdb loglines access.log --convert '
     type, source, _, verb, path, _, status, _ = line.split()
     return {
         "type": type,
@@ -1448,14 +1448,14 @@ Here's how to use ``--convert`` and ``--text`` to insert one record per word in 
 
 .. code-block:: bash
 
-    echo 'A bunch of words' | sqlite-utils insert words.db words - \
+    echo 'A bunch of words' | duckdb-utils insert words.duckdb words - \
         --text --convert '({"word": w} for w in text.split())'
 
 The result looks like this:
 
 .. code-block:: bash
 
-    sqlite-utils dump words.db
+    duckdb-utils dump words.duckdb
 
 .. code-block:: output
 
@@ -1482,7 +1482,7 @@ To replace a dog with in ID of 2 with a new record, run the following:
 .. code-block:: bash
 
     echo '{"id": 2, "name": "Pancakes", "age": 3}' | \
-        sqlite-utils insert dogs.db dogs - --pk=id --replace
+        duckdb-utils insert cats.duckdb cats - --pk=id --replace
 
 .. _cli_upsert:
 
@@ -1498,14 +1498,14 @@ For example:
 .. code-block:: bash
 
     echo '{"id": 2, "age": 4}' | \
-        sqlite-utils upsert dogs.db dogs - --pk=id
+        duckdb-utils upsert cats.duckdb cats - --pk=id
 
 This will update the dog with an ID of 2 to have an age of 4, creating a new record (with a null name) if one does not exist. If a row DOES exist the name will be left as-is.
 
 The command will fail if you reference columns that do not exist on the table. To automatically create missing columns, use the ``--alter`` option.
 
 .. note::
-    ``upsert`` in sqlite-utils 1.x worked like ``insert ... --replace`` does in 2.x. See `issue #66 <https://github.com/simonw/sqlite-utils/issues/66>`__ for details of this change.
+    ``upsert`` in duckdb-utils 1.x worked like ``insert ... --replace`` does in 2.x. See `issue #66 <https://github.com/databooth/duckdb-utils/issues/66>`__ for details of this change.
 
 
 .. _cli_bulk:
@@ -1513,13 +1513,13 @@ The command will fail if you reference columns that do not exist on the table. T
 Executing SQL in bulk
 =====================
 
-If you have a JSON, newline-delimited JSON, CSV or TSV file you can execute a bulk SQL query using each of the records in that file using the ``sqlite-utils bulk`` command.
+If you have a JSON, newline-delimited JSON, CSV or TSV file you can execute a bulk SQL query using each of the records in that file using the ``duckdb-utils bulk`` command.
 
 The command takes the database file, the SQL to be executed and the file containing records to be used when evaluating the SQL query.
 
 The SQL query should include ``:named`` parameters that match the keys in the records.
 
-For example, given a ``chickens.csv`` CSV file containing the following:
+For example, given a ``seagulls.csv`` CSV file containing the following:
 
 .. code-block::
 
@@ -1531,15 +1531,15 @@ For example, given a ``chickens.csv`` CSV file containing the following:
     5,Suna
     6,Cardi
 
-You could insert those rows into a pre-created ``chickens`` table like so:
+You could insert those rows into a pre-created ``seagulls`` table like so:
 
 .. code-block:: bash
 
-    sqlite-utils bulk chickens.db \
-      'insert into chickens (id, name) values (:id, :name)' \
-      chickens.csv --csv
+    duckdb-utils bulk seagulls.duckdb \
+      'insert into seagulls (id, name) values (:id, :name)' \
+      seagulls.csv --csv
 
-This command takes the same options as the ``sqlite-utils insert`` command - so it defaults to expecting JSON but can accept other formats using ``--csv`` or ``--tsv`` or ``--nl`` or other options described above.
+This command takes the same options as the ``duckdb-utils insert`` command - so it defaults to expecting JSON but can accept other formats using ``--csv`` or ``--tsv`` or ``--nl`` or other options described above.
 
 By default all of the SQL queries will be executed in a single transaction. To commit every 20 records, use ``--batch-size 20``.
 
@@ -1548,19 +1548,19 @@ By default all of the SQL queries will be executed in a single transaction. To c
 Inserting data from files
 =========================
 
-The ``insert-files`` command can be used to insert the content of files, along with their metadata, into a SQLite table.
+The ``insert-files`` command can be used to insert the content of files, along with their metadata, into a DuckDB table.
 
-Here's an example that inserts all of the GIF files in the current directory into a ``gifs.db`` database, placing the file contents in an ``images`` table:
+Here's an example that inserts all of the GIF files in the current directory into a ``gifs.duckdb`` database, placing the file contents in an ``images`` table:
 
 .. code-block:: bash
 
-    sqlite-utils insert-files gifs.db images *.gif
+    duckdb-utils insert-files gifs.duckdb images *.gif
 
 You can also pass one or more directories, in which case every file in those directories will be added recursively:
 
 .. code-block:: bash
 
-    sqlite-utils insert-files gifs.db images path/to/my-gifs
+    duckdb-utils insert-files gifs.duckdb images path/to/my-gifs
 
 By default this command will create a table with the following schema:
 
@@ -1578,7 +1578,7 @@ You can customize the schema using one or more ``-c`` options. For a table schem
 
 .. code-block:: bash
 
-    sqlite-utils insert-files gifs.db images *.gif -c path -c md5 -c mtime --pk=path
+    duckdb-utils insert-files gifs.duckdb images *.gif -c path -c md5 -c mtime --pk=path
 
 This will result in the following schema:
 
@@ -1596,7 +1596,7 @@ You can change the name of one of these columns using a ``-c colname:coldef`` pa
 
 .. code-block:: bash
 
-    sqlite-utils insert-files gifs.db images *.gif \
+    duckdb-utils insert-files gifs.duckdb images *.gif \
         -c path -c md5 -c last_modified:mtime --pk=path
 
 You can pass ``--replace`` or ``--upsert`` to indicate what should happen if you try to insert a file with an existing primary key. Pass ``--alter`` to cause any missing columns to be added to the table.
@@ -1604,11 +1604,11 @@ You can pass ``--replace`` or ``--upsert`` to indicate what should happen if you
 The full list of column definitions you can use is as follows:
 
 ``name``
-    The name of the file, e.g. ``cleo.jpg``
+    The name of the file, e.g. ``emme.jpg``
 ``path``
-    The path to the file relative to the root folder, e.g. ``pictures/cleo.jpg``
+    The path to the file relative to the root folder, e.g. ``pictures/emme.jpg``
 ``fullpath``
-    The fully resolved path to the image, e.g. ``/home/simonw/pictures/cleo.jpg``
+    The fully resolved path to the image, e.g. ``/home/databooth/pictures/emme.jpg``
 ``sha256``
     The SHA256 hash of the file contents
 ``md5``
@@ -1642,7 +1642,7 @@ You can insert data piped from standard input like this:
 
 .. code-block:: bash
 
-    cat dog.jpg | sqlite-utils insert-files dogs.db pics - --name=dog.jpg
+    cat dog.jpg | duckdb-utils insert-files cats.duckdb pics - --name=dog.jpg
 
 The ``-`` argument indicates data should be read from standard input. The string passed using the ``--name`` option will be used for the file name and path values.
 
@@ -1659,7 +1659,7 @@ The command accepts a database, table, one or more columns and a string of Pytho
 
 .. code-block:: bash
 
-    sqlite-utils convert content.db articles headline 'value.upper()'
+    duckdb-utils convert content.duckdb articles headline 'value.upper()'
 
 The Python code is passed as a string. Within that Python code the ``value`` variable will be the value of the current column.
 
@@ -1667,7 +1667,7 @@ The code you provide will be compiled into a function that takes ``value`` as a 
 
 .. code-block:: bash
 
-    sqlite-utils convert content.db articles headline '
+    duckdb-utils convert content.duckdb articles headline '
     value = str(value)
     return value.upper()'
 
@@ -1675,7 +1675,7 @@ Your code will be automatically wrapped in a function, but you can also define a
 
 .. code-block:: bash
 
-    sqlite-utils convert content.db articles headline '
+    duckdb-utils convert content.duckdb articles headline '
     def convert(value):
         return value.upper()'
 
@@ -1683,7 +1683,7 @@ Use a ``CODE`` value of ``-`` to read from standard input:
 
 .. code-block:: bash
 
-    cat mycode.py | sqlite-utils convert content.db articles headline -
+    cat mycode.py | duckdb-utils convert content.duckdb articles headline -
 
 Where ``mycode.py`` contains a fragment of Python code that looks like this:
 
@@ -1696,14 +1696,14 @@ The conversion will be applied to every row in the specified table. You can limi
 
 .. code-block:: bash
 
-    sqlite-utils convert content.db articles headline 'value.upper()' \
+    duckdb-utils convert content.duckdb articles headline 'value.upper()' \
         --where "headline like '%cat%'"
 
 You can include named parameters in your where clause and populate them using one or more ``--param`` options:
 
 .. code-block:: bash
 
-    sqlite-utils convert content.db articles headline 'value.upper()' \
+    duckdb-utils convert content.duckdb articles headline 'value.upper()' \
         --where "headline like :query" \
         --param query '%cat%'
 
@@ -1720,7 +1720,7 @@ You can specify Python modules that should be imported and made available to you
 
 .. code-block:: bash
 
-    sqlite-utils convert content.db articles content \
+    duckdb-utils convert content.duckdb articles content \
         '"\n".join(textwrap.wrap(value, 100))' \
         --import=textwrap
 
@@ -1728,7 +1728,7 @@ This supports nested imports as well, for example to use `ElementTree <https://d
 
 .. code-block:: bash
 
-    sqlite-utils convert content.db articles content \
+    duckdb-utils convert content.duckdb articles content \
         'xml.etree.ElementTree.fromstring(value).attrib["title"]' \
         --import=xml.etree.ElementTree
 
@@ -1747,13 +1747,13 @@ Here's an example debugging session. First, create a ``articles`` table with inv
 
 .. code-block:: bash
 
-    echo '{"content": "This is not XML"}' | sqlite-utils insert content.db articles -
+    echo '{"content": "This is not XML"}' | duckdb-utils insert content.duckdb articles -
 
 Now run the conversion with the ``--pdb`` option:
 
 .. code-block:: bash
 
-    sqlite-utils convert content.db articles content \
+    duckdb-utils convert content.duckdb articles content \
         'xml.etree.ElementTree.fromstring(value).attrib["title"]' \
         --import=xml.etree.ElementTree \
         --pdb
@@ -1783,8 +1783,8 @@ The following example adds a new ``score`` column, then updates it to list a ran
 
 .. code-block:: bash
 
-    sqlite-utils add-column content.db articles score float --not-null-default 1.0
-    sqlite-utils convert content.db articles score '
+    duckdb-utils add-column content.duckdb articles score float --not-null-default 1.0
+    duckdb-utils convert content.duckdb articles score '
     import random
     random.seed(10)
 
@@ -1794,7 +1794,7 @@ The following example adds a new ``score`` column, then updates it to list a ran
 
 .. _cli_convert_recipes:
 
-sqlite-utils convert recipes
+duckdb-utils convert recipes
 ----------------------------
 
 Various built-in recipe functions are available for common operations. These are:
@@ -1826,18 +1826,18 @@ Various built-in recipe functions are available for common operations. These are
 ``r.parsedatetime(value, dayfirst=False, yearfirst=False, errors=None)``
   Parse a datetime and convert it to ISO datetime format: ``yyyy-mm-ddTHH:MM:SS``
 
-These recipes can be used in the code passed to ``sqlite-utils convert`` like this:
+These recipes can be used in the code passed to ``duckdb-utils convert`` like this:
 
 .. code-block:: bash
 
-    sqlite-utils convert my.db mytable mycolumn \
+    duckdb-utils convert my.duckdb mytable mycolumn \
       'r.jsonsplit(value)'
 
 To use any of the documented parameters, do this:
 
 .. code-block:: bash
 
-    sqlite-utils convert my.db mytable mycolumn \
+    duckdb-utils convert my.duckdb mytable mycolumn \
       'r.jsonsplit(value, delimiter=":")'
 
 .. _cli_convert_output:
@@ -1849,14 +1849,14 @@ The ``--output`` and ``--output-type`` options can be used to save the result of
 
 .. code-block:: bash
 
-    sqlite-utils convert content.db articles headline 'value.upper()' \
+    duckdb-utils convert content.duckdb articles headline 'value.upper()' \
       --output headline_upper
 
 The type of the created column defaults to ``text``, but a different column type can be specified using ``--output-type``. This example will create a new floating point column called ``id_as_a_float`` with a copy of each item's ID increased by 0.5:
 
 .. code-block:: bash
 
-    sqlite-utils convert content.db articles id 'float(value) + 0.5' \
+    duckdb-utils convert content.duckdb articles id 'float(value) + 0.5' \
       --output id_as_a_float \
       --output-type float
 
@@ -1869,13 +1869,13 @@ Converting a column into multiple columns
 
 Sometimes you may wish to convert a single column into multiple derived columns. For example, you may have a ``location`` column containing ``latitude,longitude`` values which you wish to split out into separate ``latitude`` and ``longitude`` columns.
 
-You can achieve this using the ``--multi`` option to ``sqlite-utils convert``. This option expects your Python code to return a Python dictionary: new columns well be created and populated for each of the keys in that dictionary.
+You can achieve this using the ``--multi`` option to ``duckdb-utils convert``. This option expects your Python code to return a Python dictionary: new columns well be created and populated for each of the keys in that dictionary.
 
 For the ``latitude,longitude`` example you would use the following:
 
 .. code-block:: bash
 
-    sqlite-utils convert demo.db places location \
+    duckdb-utils convert demo.duckdb places location \
     'bits = value.split(",")
     return {
       "latitude": float(bits[0]),
@@ -1903,7 +1903,7 @@ Most of the time creating tables by inserting example data is the quickest appro
 
 .. code-block:: bash
 
-    sqlite-utils create-table mydb.db mytable id integer name text --pk=id
+    duckdb-utils create-table mydb.duckdb mytable id integer name text --pk=id
 
 This will create a table called ``mytable`` with two columns - an integer ``id`` column and a text ``name`` column. It will set the ``id`` column to be the primary key.
 
@@ -1913,7 +1913,7 @@ You can specify columns that should be NOT NULL using ``--not-null colname``. Yo
 
 .. code-block:: bash
 
-    sqlite-utils create-table mydb.db mytable \
+    duckdb-utils create-table mydb.duckdb mytable \
         id integer \
         name text \
         age integer \
@@ -1925,7 +1925,7 @@ You can specify columns that should be NOT NULL using ``--not-null colname``. Yo
 
 .. code-block:: bash
 
-    sqlite-utils tables mydb.db --schema -t
+    duckdb-utils tables mydb.duckdb --schema -t
 
 .. code-block:: output
 
@@ -1942,12 +1942,12 @@ You can specify foreign key relationships between the tables you are creating us
 
 .. code-block:: bash
 
-    sqlite-utils create-table books.db authors \
+    duckdb-utils create-table books.duckdb authors \
         id integer \
         name text \
         --pk=id
 
-    sqlite-utils create-table books.db books \
+    duckdb-utils create-table books.duckdb books \
         id integer \
         title text \
         author_id integer \
@@ -1956,7 +1956,7 @@ You can specify foreign key relationships between the tables you are creating us
 
 .. code-block:: bash
 
-    sqlite-utils tables books.db --schema -t
+    duckdb-utils tables books.duckdb --schema -t
 
 .. code-block:: output
 
@@ -1972,15 +1972,15 @@ You can specify foreign key relationships between the tables you are creating us
                 [author_id] INTEGER REFERENCES [authors]([id])
              )
 
-You can create a table in `SQLite STRICT mode <https://www.sqlite.org/stricttables.html>`__ using ``--strict``:
+You can create a table in `DuckDB STRICT mode <https://www.sqlite.org/stricttables.html>`__ using ``--strict``:
 
 .. code-block:: bash
 
-   sqlite-utils create-table mydb.db mytable id integer name text --strict
+   duckdb-utils create-table mydb.duckdb mytable id integer name text --strict
 
 .. code-block:: bash
 
-   sqlite-utils tables mydb.db --schema -t
+   duckdb-utils tables mydb.duckdb --schema -t
 
 .. code-block:: output
 
@@ -2004,7 +2004,7 @@ Yo ucan rename a table using the ``rename-table`` command:
 
 .. code-block:: bash
 
-    sqlite-utils rename-table mydb.db oldname newname
+    duckdb-utils rename-table mydb.duckdb oldname newname
 
 Pass ``--ignore`` to ignore any errors caused by the table not existing, or the new name already being in use.
 
@@ -2017,7 +2017,7 @@ The ``duplicate`` command duplicates a table - creating a new table with the sam
 
 .. code-block:: bash
 
-    sqlite-utils duplicate books.db authors authors_copy
+    duckdb-utils duplicate books.duckdb authors authors_copy
 
 .. _cli_drop_table:
 
@@ -2028,7 +2028,7 @@ You can drop a table using the ``drop-table`` command:
 
 .. code-block:: bash
 
-    sqlite-utils drop-table mydb.db mytable
+    duckdb-utils drop-table mydb.duckdb mytable
 
 Use ``--ignore`` to ignore the error if the table does not exist.
 
@@ -2037,11 +2037,11 @@ Use ``--ignore`` to ignore the error if the table does not exist.
 Transforming tables
 ===================
 
-The ``transform`` command allows you to apply complex transformations to a table that cannot be implemented using a regular SQLite ``ALTER TABLE`` command. See :ref:`python_api_transform` for details of how this works. The ``transform`` command preserves a table's ``STRICT`` mode.
+The ``transform`` command allows you to apply complex transformations to a table that cannot be implemented using a regular DuckDB ``ALTER TABLE`` command. See :ref:`python_api_transform` for details of how this works. The ``transform`` command preserves a table's ``STRICT`` mode.
 
 .. code-block:: bash
 
-    sqlite-utils transform mydb.db mytable \
+    duckdb-utils transform mydb.duckdb mytable \
         --drop column1 \
         --rename column2 column_renamed
 
@@ -2087,7 +2087,7 @@ If you want to see the SQL that will be executed to make the change without actu
 
 .. code-block:: bash
 
-    sqlite-utils transform fixtures.db roadside_attractions \
+    duckdb-utils transform fixtures.duckdb roadside_attractions \
         --rename pk id \
         --default name Untitled \
         --column-order id \
@@ -2114,23 +2114,23 @@ If you want to see the SQL that will be executed to make the change without actu
 Adding a primary key to a rowid table
 -------------------------------------
 
-SQLite tables that are created without an explicit primary key are created as `rowid tables <https://www.sqlite.org/rowidtable.html>`__. They still have a numeric primary key which is available in the ``rowid`` column, but that column is not included in the output of ``select *``. Here's an example:
+DuckDB tables that are created without an explicit primary key are created as `rowid tables <https://www.sqlite.org/rowidtable.html>`__. They still have a numeric primary key which is available in the ``rowid`` column, but that column is not included in the output of ``select *``. Here's an example:
 
 .. code-block:: bash
 
     echo '[{"name": "Azi"}, {"name": "Suna"}]' | \
-        sqlite-utils insert chickens.db chickens -
-    sqlite-utils schema chickens.db
+        duckdb-utils insert seagulls.duckdb seagulls -
+    duckdb-utils schema seagulls.duckdb
 
 .. code-block:: output
 
-    CREATE TABLE [chickens] (
+    CREATE TABLE [seagulls] (
        [name] TEXT
     );
 
 .. code-block:: bash
 
-    sqlite-utils chickens.db 'select * from chickens'
+    duckdb-utils seagulls.duckdb 'select * from seagulls'
 
 .. code-block:: output
 
@@ -2139,33 +2139,33 @@ SQLite tables that are created without an explicit primary key are created as `r
 
 .. code-block:: bash
 
-    sqlite-utils chickens.db 'select rowid, * from chickens'
+    duckdb-utils seagulls.duckdb 'select rowid, * from seagulls'
 
 .. code-block:: output
 
     [{"rowid": 1, "name": "Azi"},
      {"rowid": 2, "name": "Suna"}]
 
-You can use ``sqlite-utils transform ... --pk id`` to add a primary key column called ``id`` to the table. The primary key will be created as an ``INTEGER PRIMARY KEY`` and the existing ``rowid`` values will be copied across to it. It will automatically increment as new rows are added to the table:
+You can use ``duckdb-utils transform ... --pk id`` to add a primary key column called ``id`` to the table. The primary key will be created as an ``INTEGER PRIMARY KEY`` and the existing ``rowid`` values will be copied across to it. It will automatically increment as new rows are added to the table:
 
 .. code-block:: bash
 
-    sqlite-utils transform chickens.db chickens --pk id
+    duckdb-utils transform seagulls.duckdb seagulls --pk id
 
 .. code-block:: bash
 
-    sqlite-utils schema chickens.db
+    duckdb-utils schema seagulls.duckdb
 
 .. code-block:: output
 
-    CREATE TABLE "chickens" (
+    CREATE TABLE "seagulls" (
        [id] INTEGER PRIMARY KEY,
        [name] TEXT
     );
 
 .. code-block:: bash
 
-    sqlite-utils chickens.db 'select * from chickens'
+    duckdb-utils seagulls.duckdb 'select * from seagulls'
 
 .. code-block:: output
 
@@ -2174,11 +2174,11 @@ You can use ``sqlite-utils transform ... --pk id`` to add a primary key column c
 
 .. code-block:: bash
 
-    echo '{"name": "Cardi"}' | sqlite-utils insert chickens.db chickens -
+    echo '{"name": "Cardi"}' | duckdb-utils insert seagulls.duckdb seagulls -
 
 .. code-block:: bash
 
-    sqlite-utils chickens.db 'select * from chickens'
+    duckdb-utils seagulls.duckdb 'select * from seagulls'
 
 .. code-block:: output
 
@@ -2191,7 +2191,7 @@ You can use ``sqlite-utils transform ... --pk id`` to add a primary key column c
 Extracting columns into a separate table
 ========================================
 
-The ``sqlite-utils extract`` command can be used to extract specified columns into a separate table.
+The ``duckdb-utils extract`` command can be used to extract specified columns into a separate table.
 
 Take a look at the Python API documentation for :ref:`python_api_extract` for a detailed description of how this works, including examples of table schemas before and after running an extraction operation.
 
@@ -2199,7 +2199,7 @@ The command takes a database, table and one or more columns that should be extra
 
 .. code-block:: bash
 
-    sqlite-utils extract my.db trees species
+    duckdb-utils extract my.duckdb trees species
 
 This would produce the following schema:
 
@@ -2232,20 +2232,20 @@ The command takes the following options:
 ``--silent``
     Don't display the progress bar.
 
-Here's a more complex example that makes use of these options. It converts `this CSV file <https://github.com/wri/global-power-plant-database/blob/232a666653e14d803ab02717efc01cdd437e7601/output_database/global_power_plant_database.csv>`__ full of global power plants into SQLite, then extracts the ``country`` and ``country_long`` columns into a separate ``countries`` table:
+Here's a more complex example that makes use of these options. It converts `this CSV file <https://github.com/wri/global-power-plant-database/blob/232a666653e14d803ab02717efc01cdd437e7601/output_database/global_power_plant_database.csv>`__ full of global power plants into DuckDB, then extracts the ``country`` and ``country_long`` columns into a separate ``countries`` table:
 
 .. code-block:: bash
 
     wget 'https://github.com/wri/global-power-plant-database/blob/232a6666/output_database/global_power_plant_database.csv?raw=true'
-    sqlite-utils insert global.db power_plants \
+    duckdb-utils insert global.duckdb power_plants \
         'global_power_plant_database.csv?raw=true' --csv
     # Extract those columns:
-    sqlite-utils extract global.db power_plants country country_long \
+    duckdb-utils extract global.duckdb power_plants country country_long \
         --table countries \
         --fk-column country_id \
         --rename country_long name
 
-After running the above, the command ``sqlite-utils schema global.db`` reveals the following schema:
+After running the above, the command ``duckdb-utils schema global.duckdb`` reveals the following schema:
 
 .. code-block:: sql
 
@@ -2293,15 +2293,15 @@ You can create a view using the ``create-view`` command:
 
 .. code-block:: bash
 
-    sqlite-utils create-view mydb.db version "select sqlite_version()"
+    duckdb-utils create-view mydb.duckdb version "select duckdb_version()"
 
 .. code-block:: bash
 
-    sqlite-utils mydb.db "select * from version"
+    duckdb-utils mydb.duckdb "select * from version"
 
 .. code-block:: output
 
-    [{"sqlite_version()": "3.31.1"}]
+    [{"duckdb_version()": "3.31.1"}]
 
 Use ``--replace`` to replace an existing view of the same name, and ``--ignore`` to do nothing if a view already exists.
 
@@ -2314,7 +2314,7 @@ You can drop a view using the ``drop-view`` command:
 
 .. code-block:: bash
 
-    sqlite-utils drop-view myview
+    duckdb-utils drop-view myview
 
 Use ``--ignore`` to ignore the error if the view does not exist.
 
@@ -2327,7 +2327,7 @@ You can add a column using the ``add-column`` command:
 
 .. code-block:: bash
 
-    sqlite-utils add-column mydb.db mytable nameofcolumn text
+    duckdb-utils add-column mydb.duckdb mytable nameofcolumn text
 
 The last argument here is the type of the column to be created. This can be one of:
 
@@ -2342,7 +2342,7 @@ You can add a column that is a foreign key reference to another table using the 
 
 .. code-block:: bash
 
-    sqlite-utils add-column mydb.db dogs species_id --fk species
+    duckdb-utils add-column mydb.duckdb cats species_id --fk species
 
 This will automatically detect the name of the primary key on the species table and use that (and its type) for the new column.
 
@@ -2350,13 +2350,13 @@ You can explicitly specify the column you wish to reference using ``--fk-col``:
 
 .. code-block:: bash
 
-    sqlite-utils add-column mydb.db dogs species_id --fk species --fk-col ref
+    duckdb-utils add-column mydb.duckdb cats species_id --fk species --fk-col ref
 
 You can set a ``NOT NULL DEFAULT 'x'`` constraint on the new column using ``--not-null-default``:
 
 .. code-block:: bash
 
-    sqlite-utils add-column mydb.db dogs friends_count integer --not-null-default 0
+    duckdb-utils add-column mydb.duckdb cats friends_count integer --not-null-default 0
 
 .. _cli_add_column_alter:
 
@@ -2367,32 +2367,32 @@ You can use the ``--alter`` option to automatically add new columns if the data 
 
 .. code-block:: bash
 
-    sqlite-utils insert dogs.db dogs new-dogs.json --pk=id --alter
+    duckdb-utils insert cats.duckdb cats new-cats.json --pk=id --alter
 
 .. _cli_add_foreign_key:
 
 Adding foreign key constraints
 ==============================
 
-The ``add-foreign-key`` command can be used to add new foreign key references to an existing table - something which SQLite's ``ALTER TABLE`` command does not support.
+The ``add-foreign-key`` command can be used to add new foreign key references to an existing table - something which DuckDB's ``ALTER TABLE`` command does not support.
 
 To add a foreign key constraint pointing the ``books.author_id`` column to ``authors.id`` in another table, do this:
 
 .. code-block:: bash
 
-    sqlite-utils add-foreign-key books.db books author_id authors id
+    duckdb-utils add-foreign-key books.duckdb books author_id authors id
 
-If you omit the other table and other column references ``sqlite-utils`` will attempt to guess them - so the above example could instead look like this:
+If you omit the other table and other column references ``duckdb-utils`` will attempt to guess them - so the above example could instead look like this:
 
 .. code-block:: bash
 
-    sqlite-utils add-foreign-key books.db books author_id
+    duckdb-utils add-foreign-key books.duckdb books author_id
 
 Add ``--ignore`` to ignore an existing foreign key (as opposed to returning an error):
 
 .. code-block:: bash
 
-    sqlite-utils add-foreign-key books.db books author_id --ignore
+    duckdb-utils add-foreign-key books.duckdb books author_id --ignore
 
 See :ref:`python_api_add_foreign_key` in the Python API documentation for further details, including how the automatic table guessing mechanism works.
 
@@ -2405,7 +2405,7 @@ Adding a foreign key requires a ``VACUUM``. On large databases this can be an ex
 
 .. code-block:: bash
 
-    sqlite-utils add-foreign-keys books.db \
+    duckdb-utils add-foreign-keys books.duckdb \
         books author_id authors id \
         authors country_id countries id
 
@@ -2420,7 +2420,7 @@ If you want to ensure that every foreign key column in your database has a corre
 
 .. code-block:: bash
 
-    sqlite-utils index-foreign-keys books.db
+    duckdb-utils index-foreign-keys books.duckdb
 
 .. _cli_defaults_not_null:
 
@@ -2431,7 +2431,7 @@ You can use the ``--not-null`` and ``--default`` options (to both ``insert`` and
 
 .. code-block:: bash
 
-    sqlite-utils insert dogs.db dogs_with_scores dogs-with-scores.json \
+    duckdb-utils insert cats.duckdb cats_with_scores cats-with-scores.json \
         --not-null=age \
         --not-null=name \
         --default age 2 \
@@ -2446,7 +2446,7 @@ You can add an index to an existing table using the ``create-index`` command:
 
 .. code-block:: bash
 
-    sqlite-utils create-index mydb.db mytable col1 [col2...]
+    duckdb-utils create-index mydb.duckdb mytable col1 [col2...]
 
 This can be used to create indexes against a single column or multiple columns.
 
@@ -2460,7 +2460,7 @@ To add an index on a column in descending order, prefix the column with a hyphen
 
 .. code-block:: bash
 
-    sqlite-utils create-index mydb.db mytable -- col1 -col2 col3
+    duckdb-utils create-index mydb.duckdb mytable -- col1 -col2 col3
 
 This will create an index on that table on ``(col1, col2 desc, col3)``.
 
@@ -2473,83 +2473,83 @@ Add the ``--analyze`` option to run ``ANALYZE`` against the index after it has b
 Configuring full-text search
 ============================
 
-You can enable SQLite full-text search on a table and a set of columns like this:
+You can enable DuckDB full-text search on a table and a set of columns like this:
 
 .. code-block:: bash
 
-    sqlite-utils enable-fts mydb.db documents title summary
+    duckdb-utils enable-fts mydb.duckdb documents title summary
 
-This will use SQLite's FTS5 module by default. Use ``--fts4`` if you want to use FTS4:
+This will use DuckDB's FTS5 module by default. Use ``--fts4`` if you want to use FTS4:
 
 .. code-block:: bash
 
-    sqlite-utils enable-fts mydb.db documents title summary --fts4
+    duckdb-utils enable-fts mydb.duckdb documents title summary --fts4
 
 The ``enable-fts`` command will populate the new index with all existing documents. If you later add more documents you will need to use ``populate-fts`` to cause them to be indexed as well:
 
 .. code-block:: bash
 
-    sqlite-utils populate-fts mydb.db documents title summary
+    duckdb-utils populate-fts mydb.duckdb documents title summary
 
 A better solution here is to use database triggers. You can set up database triggers to automatically update the full-text index using the ``--create-triggers`` option when you first run ``enable-fts``:
 
 .. code-block:: bash
 
-    sqlite-utils enable-fts mydb.db documents title summary --create-triggers
+    duckdb-utils enable-fts mydb.duckdb documents title summary --create-triggers
 
 To set a custom FTS tokenizer, e.g. to enable Porter stemming, use ``--tokenize=``:
 
 .. code-block:: bash
 
-    sqlite-utils populate-fts mydb.db documents title summary --tokenize=porter
+    duckdb-utils populate-fts mydb.duckdb documents title summary --tokenize=porter
 
 To remove the FTS tables and triggers you created, use ``disable-fts``:
 
 .. code-block:: bash
 
-    sqlite-utils disable-fts mydb.db documents
+    duckdb-utils disable-fts mydb.duckdb documents
 
 To rebuild one or more FTS tables (see :ref:`python_api_fts_rebuild`), use ``rebuild-fts``:
 
 .. code-block:: bash
 
-    sqlite-utils rebuild-fts mydb.db documents
+    duckdb-utils rebuild-fts mydb.duckdb documents
 
 You can rebuild every FTS table by running ``rebuild-fts`` without passing any table names:
 
 .. code-block:: bash
 
-    sqlite-utils rebuild-fts mydb.db
+    duckdb-utils rebuild-fts mydb.duckdb
 
 .. _cli_search:
 
 Executing searches
 ==================
 
-Once you have configured full-text search for a table, you can search it using ``sqlite-utils search``:
+Once you have configured full-text search for a table, you can search it using ``duckdb-utils search``:
 
 .. code-block:: bash
 
-    sqlite-utils search mydb.db documents searchterm
+    duckdb-utils search mydb.duckdb documents searchterm
 
-This command accepts the same output options as ``sqlite-utils query``: ``--table``, ``--csv``, ``--tsv``, ``--nl`` etc.
+This command accepts the same output options as ``duckdb-utils query``: ``--table``, ``--csv``, ``--tsv``, ``--nl`` etc.
 
 By default it shows the most relevant matches first. You can specify a different sort order using the ``-o`` option, which can take a column or a column followed by ``desc``:
 
 .. code-block:: bash
 
     # Sort by rowid
-    sqlite-utils search mydb.db documents searchterm -o rowid
+    duckdb-utils search mydb.duckdb documents searchterm -o rowid
     # Sort by created in descending order
-    sqlite-utils search mydb.db documents searchterm -o 'created desc'
+    duckdb-utils search mydb.duckdb documents searchterm -o 'created desc'
 
-SQLite `advanced search syntax <https://www.sqlite.org/fts5.html#full_text_query_syntax>`__ is enabled by default. To run a search with automatic quoting applied to the terms to avoid them being potentially interpreted as advanced search syntax use the ``--quote`` option.
+DuckDB `advanced search syntax <https://www.sqlite.org/fts5.html#full_text_query_syntax>`__ is enabled by default. To run a search with automatic quoting applied to the terms to avoid them being potentially interpreted as advanced search syntax use the ``--quote`` option.
 
 You can specify a subset of columns to be returned using the ``-c`` option one or more times:
 
 .. code-block:: bash
 
-    sqlite-utils search mydb.db documents searchterm -c title -c created
+    duckdb-utils search mydb.duckdb documents searchterm -c title -c created
 
 By default all search results will be returned. You can use ``--limit 20`` to return just the first 20 results.
 
@@ -2557,7 +2557,7 @@ Use the ``--sql`` option to output the SQL that would be executed, rather than r
 
 .. code-block:: bash
 
-    sqlite-utils search mydb.db documents searchterm --sql
+    duckdb-utils search mydb.duckdb documents searchterm --sql
 
 .. code-block:: output
 
@@ -2582,30 +2582,30 @@ Use the ``--sql`` option to output the SQL that would be executed, rather than r
 Enabling cached counts
 ======================
 
-``select count(*)`` queries can take a long time against large tables. ``sqlite-utils`` can speed these up by adding triggers to maintain a ``_counts`` table, see :ref:`python_api_cached_table_counts` for details.
+``select count(*)`` queries can take a long time against large tables. ``duckdb-utils`` can speed these up by adding triggers to maintain a ``_counts`` table, see :ref:`python_api_cached_table_counts` for details.
 
-The ``sqlite-utils enable-counts`` command can be used to configure these triggers, either for every table in the database or for specific tables.
+The ``duckdb-utils enable-counts`` command can be used to configure these triggers, either for every table in the database or for specific tables.
 
 .. code-block:: bash
 
     # Configure triggers for every table in the database
-    sqlite-utils enable-counts mydb.db
+    duckdb-utils enable-counts mydb.duckdb
 
     # Configure triggers just for specific tables
-    sqlite-utils enable-counts mydb.db table1 table2
+    duckdb-utils enable-counts mydb.duckdb table1 table2
 
 If the ``_counts`` table ever becomes out-of-sync with the actual table counts you can repair it using the ``reset-counts`` command:
 
 .. code-block:: bash
 
-    sqlite-utils reset-counts mydb.db
+    duckdb-utils reset-counts mydb.duckdb
 
 .. _cli_analyze:
 
 Optimizing index usage with ANALYZE
 ===================================
 
-The `SQLite ANALYZE command <https://www.sqlite.org/lang_analyze.html>`__ builds a table of statistics which the query planner can use to make better decisions about which indexes to use for a given query.
+The `DuckDB ANALYZE command <https://www.sqlite.org/lang_analyze.html>`__ builds a table of statistics which the query planner can use to make better decisions about which indexes to use for a given query.
 
 You should run ``ANALYZE`` if your database is large and you do not think your indexes are being efficiently used.
 
@@ -2613,13 +2613,13 @@ To run ``ANALYZE`` against every index in a database, use this:
 
 .. code-block:: bash
 
-    sqlite-utils analyze mydb.db
+    duckdb-utils analyze mydb.duckdb
 
 You can run it against specific tables, or against specific named indexes, by passing them as optional arguments:
 
 .. code-block:: bash
 
-    sqlite-utils analyze mydb.db mytable idx_mytable_name
+    duckdb-utils analyze mydb.duckdb mytable idx_mytable_name
 
 You can also run ``ANALYZE`` as part of another command using the ``--analyze`` option. This is supported by the ``create-index``, ``insert`` and ``upsert`` commands.
 
@@ -2632,30 +2632,30 @@ You can run VACUUM to optimize your database like so:
 
 .. code-block:: bash
 
-    sqlite-utils vacuum mydb.db
+    duckdb-utils vacuum mydb.duckdb
 
 .. _cli_optimize:
 
 Optimize
 ========
 
-The optimize command can dramatically reduce the size of your database if you are using SQLite full-text search. It runs OPTIMIZE against all of your FTS4 and FTS5 tables, then runs VACUUM.
+The optimize command can dramatically reduce the size of your database if you are using DuckDB full-text search. It runs OPTIMIZE against all of your FTS4 and FTS5 tables, then runs VACUUM.
 
 If you just want to run OPTIMIZE without the VACUUM, use the ``--no-vacuum`` flag.
 
 .. code-block:: bash
 
     # Optimize all FTS tables and then VACUUM
-    sqlite-utils optimize mydb.db
+    duckdb-utils optimize mydb.duckdb
 
     # Optimize but skip the VACUUM
-    sqlite-utils optimize --no-vacuum mydb.db
+    duckdb-utils optimize --no-vacuum mydb.duckdb
 
 To optimize specific tables rather than every FTS table, pass those tables as extra arguments:
 
 .. code-block:: bash
 
-    sqlite-utils optimize mydb.db table_1 table_2
+    duckdb-utils optimize mydb.duckdb table_1 table_2
 
 .. _cli_wal:
 
@@ -2666,13 +2666,13 @@ You can enable `Write-Ahead Logging <https://www.sqlite.org/wal.html>`__ for a d
 
 .. code-block:: bash
 
-    sqlite-utils enable-wal mydb.db
+    duckdb-utils enable-wal mydb.duckdb
 
 You can disable WAL mode using ``disable-wal``:
 
 .. code-block:: bash
 
-    sqlite-utils disable-wal mydb.db
+    duckdb-utils disable-wal mydb.duckdb
 
 Both of these commands accept one or more database files as arguments.
 
@@ -2685,7 +2685,7 @@ The ``dump`` command outputs a SQL dump of the schema and full contents of the s
 
 .. code-block:: bash
 
-    sqlite-utils dump mydb.db
+    duckdb-utils dump mydb.duckdb
     BEGIN TRANSACTION;
     CREATE TABLE ...
     ...
@@ -2693,18 +2693,18 @@ The ``dump`` command outputs a SQL dump of the schema and full contents of the s
 
 .. _cli_load_extension:
 
-Loading SQLite extensions
+Loading DuckDB extensions
 =========================
 
-Many of these commands have the ability to load additional SQLite extensions using the ``--load-extension=/path/to/extension`` option - use ``--help`` to check for support, e.g. ``sqlite-utils rows --help``.
+Many of these commands have the ability to load additional DuckDB extensions using the ``--load-extension=/path/to/extension`` option - use ``--help`` to check for support, e.g. ``duckdb-utils rows --help``.
 
 This option can be applied multiple times to load multiple extensions.
 
-Since `SpatiaLite <https://www.gaia-gis.it/fossil/libspatialite/index>`__ is commonly used with SQLite, the value ``spatialite`` is special: it will search for SpatiaLite in the most common installation locations, saving you from needing to remember exactly where that module is located:
+Since `SpatiaLite <https://www.gaia-gis.it/fossil/libspatialite/index>`__ is commonly used with DuckDB, the value ``spatialite`` is special: it will search for SpatiaLite in the most common installation locations, saving you from needing to remember exactly where that module is located:
 
 .. code-block:: bash
 
-    sqlite-utils memory "select spatialite_version()" --load-extension=spatialite
+    duckdb-utils memory "select spatialite_version()" --load-extension=spatialite
 
 .. code-block:: output
 
@@ -2715,15 +2715,15 @@ Since `SpatiaLite <https://www.gaia-gis.it/fossil/libspatialite/index>`__ is com
 SpatiaLite helpers
 ==================
 
-`SpatiaLite <https://www.gaia-gis.it/fossil/libspatialite/home>`_ adds geographic capability to SQLite (similar to how PostGIS builds on PostgreSQL). The `SpatiaLite cookbook <http://www.gaia-gis.it/gaia-sins/spatialite-cookbook-5/index.html>`__ is a good resource for learning what's possible with it.
+`SpatiaLite <https://www.gaia-gis.it/fossil/libspatialite/home>`_ adds geographic capability to DuckDB (similar to how PostGIS builds on PostgreSQL). The `SpatiaLite cookbook <http://www.gaia-gis.it/gaia-sins/spatialite-cookbook-5/index.html>`__ is a good resource for learning what's possible with it.
 
-You can convert an existing table to a geographic table by adding a geometry column, use the ``sqlite-utils add-geometry-column`` command:
+You can convert an existing table to a geographic table by adding a geometry column, use the ``duckdb-utils add-geometry-column`` command:
 
 .. code-block:: bash
 
-    sqlite-utils add-geometry-column spatial.db locations geometry --type POLYGON --srid 4326
+    duckdb-utils add-geometry-column spatial.duckdb locations geometry --type POLYGON --srid 4326
 
-The table (``locations`` in the example above) must already exist before adding a geometry column. Use ``sqlite-utils create-table`` first, then ``add-geometry-column``.
+The table (``locations`` in the example above) must already exist before adding a geometry column. Use ``duckdb-utils create-table`` first, then ``add-geometry-column``.
 
 Use the ``--type`` option to specify a geometry type. By default, ``add-geometry-column`` uses a generic ``GEOMETRY``, which will work with any type, though it may not be supported by some desktop GIS applications. 
 
@@ -2747,7 +2747,7 @@ Once you have a geometry column, you can speed up bounding box queries by adding
 
 .. code-block:: bash
 
-    sqlite-utils create-spatial-index spatial.db locations geometry
+    duckdb-utils create-spatial-index spatial.duckdb locations geometry
 
 See this `SpatiaLite Cookbook recipe <http://www.gaia-gis.it/gaia-sins/spatialite-cookbook-5/cookbook_topics.03.html#topic_Wonderful_RTree_Spatial_Index>`__ for examples of how to use a spatial index.
 
@@ -2756,13 +2756,13 @@ See this `SpatiaLite Cookbook recipe <http://www.gaia-gis.it/gaia-sins/spatialit
 Installing packages
 ===================
 
-The :ref:`convert command <cli_convert>` and the :ref:`insert -\\-convert <cli_insert_convert>` and :ref:`query -\\-functions <cli_query_functions>` options can be provided with a Python script that imports additional modules from the ``sqlite-utils`` environment.
+The :ref:`convert command <cli_convert>` and the :ref:`insert -\\-convert <cli_insert_convert>` and :ref:`query -\\-functions <cli_query_functions>` options can be provided with a Python script that imports additional modules from the ``duckdb-utils`` environment.
 
-You can install packages from PyPI directly into the correct environment using ``sqlite-utils install <package>``. This is a wrapper around ``pip install``.
+You can install packages from PyPI directly into the correct environment using ``duckdb-utils install <package>``. This is a wrapper around ``pip install``.
 
 .. code-block:: bash
 
-    sqlite-utils install beautifulsoup4
+    duckdb-utils install beautifulsoup4
 
 Use ``-U`` to upgrade an existing package.
 
@@ -2771,11 +2771,11 @@ Use ``-U`` to upgrade an existing package.
 Uninstalling packages
 =====================
 
-You can uninstall packages that were installed using ``sqlite-utils install`` with ``sqlite-utils uninstall <package>``:
+You can uninstall packages that were installed using ``duckdb-utils install`` with ``duckdb-utils uninstall <package>``:
 
 .. code-block:: bash
 
-    sqlite-utils uninstall beautifulsoup4
+    duckdb-utils uninstall beautifulsoup4
 
 Use ``-y`` to skip the request for confirmation.
 
@@ -2786,7 +2786,7 @@ Experimental TUI
 
 A TUI is a "text user interface" (or "terminal user interface") - a keyboard and mouse driven graphical interface running in your terminal.
 
-``sqlite-utils`` has experimental support for a TUI for building command-line invocations, built on top of the `Trogon <https://github.com/Textualize/trogon/>`__ TUI library.
+``duckdb-utils`` has experimental support for a TUI for building command-line invocations, built on top of the `Trogon <https://github.com/Textualize/trogon/>`__ TUI library.
 
 To enable this feature you will need to install the ``trogon`` dependency. You can do that like so:
 
@@ -2794,13 +2794,13 @@ To enable this feature you will need to install the ``trogon`` dependency. You c
 
     sqite-utils install trogon
 
-Once installed, running the ``sqlite-utils tui`` command will launch the TUI interface:
+Once installed, running the ``duckdb-utils tui`` command will launch the TUI interface:
 
 .. code-block:: bash
 
-    sqlite-utils tui
+    duckdb-utils tui
 
 You can then construct a command by selecting options from the menus, and execute it using ``Ctrl+R``.
 
 .. image:: _static/img/tui.png
-    :alt: A TUI interface for sqlite-utils - the left column shows a list of commands, while the right panel has a form for constructing arguments to the add-column command.
+    :alt: A TUI interface for duckdb-utils - the left column shows a list of commands, while the right panel has a form for constructing arguments to the add-column command.

@@ -18,10 +18,10 @@ def test_rows(existing_db):
     ],
 )
 def test_rows_where(where, where_args, expected_ids, fresh_db):
-    table = fresh_db["dogs"]
+    table = fresh_db["cats"]
     table.insert_all(
         [
-            {"id": 1, "name": "Cleo", "age": 4, "is_good": True},
+            {"id": 1, "name": "Emme", "age": 4, "is_good": True},
             {"id": 2, "name": "Pancakes", "age": 3, "is_good": True},
         ],
         pk="id",
@@ -41,10 +41,10 @@ def test_rows_where(where, where_args, expected_ids, fresh_db):
     ],
 )
 def test_rows_where_order_by(where, order_by, expected_ids, fresh_db):
-    table = fresh_db["dogs"]
+    table = fresh_db["cats"]
     table.insert_all(
         [
-            {"id": 1, "name": "Cleo", "age": 4},
+            {"id": 1, "name": "Emme", "age": 4},
             {"id": 2, "name": "Pancakes", "age": 3},
             {"id": 3, "name": "Bailey", "age": 2},
         ],

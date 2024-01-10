@@ -14,19 +14,19 @@ from typing import Dict, cast, BinaryIO, Iterable, Optional, Tuple, Type
 import click
 
 try:
-    import pysqlite3 as sqlite3  # noqa: F401
-    from pysqlite3 import dbapi2  # noqa: F401
+    import pyduckdb as duckdb  # noqa: F401
+    from pyduckdb import dbapi2  # noqa: F401
 
     OperationalError = dbapi2.OperationalError
 except ImportError:
     try:
-        import sqlean as sqlite3  # noqa: F401
+        import sqlean as duckdb  # noqa: F401
         from sqlean import dbapi2  # noqa: F401
 
         OperationalError = dbapi2.OperationalError
     except ImportError:
-        import sqlite3  # noqa: F401
-        from sqlite3 import dbapi2  # noqa: F401
+        import duckdb  # noqa: F401
+        from duckdb import dbapi2  # noqa: F401
 
         OperationalError = dbapi2.OperationalError
 
@@ -61,16 +61,16 @@ def maximize_csv_field_size_limit():
 def find_spatialite() -> Optional[str]:
     """
     The ``find_spatialite()`` function searches for the `SpatiaLite <https://www.gaia-gis.it/fossil/libspatialite/index>`__
-    SQLite extension in some common places. It returns a string path to the location, or ``None`` if SpatiaLite was not found.
+    DuckDB extension in some common places. It returns a string path to the location, or ``None`` if SpatiaLite was not found.
 
     You can use it in code like this:
 
     .. code-block:: python
 
-        from sqlite_utils import Database
-        from sqlite_utils.utils import find_spatialite
+        from duckdb_utils import Database
+        from duckdb_utils.utils import find_spatialite
 
-        db = Database("mydb.db")
+        db = Database("mydb.duckdb")
         spatialite = find_spatialite()
         if spatialite:
             db.conn.enable_load_extension(True)
@@ -122,7 +122,7 @@ def types_for_column_types(all_column_types):
 
 
 def column_affinity(column_type):
-    # Implementation of SQLite affinity rules from
+    # Implementation of DuckDB affinity rules from
     # https://www.sqlite.org/datatype3.html#determination_of_column_affinity
     assert isinstance(column_type, str)
     column_type = column_type.upper().strip()
@@ -220,7 +220,7 @@ def _extra_key_strategy(
             yield row
         elif ignore_extras:
             # ignoring row.pop(none) because of this issue:
-            # https://github.com/simonw/sqlite-utils/issues/440#issuecomment-1155358637
+            # https://github.com/databooth/duckdb-utils/issues/440#issuecomment-1155358637
             row.pop(None)  # type: ignore
             yield row
         elif not extras_key:
@@ -246,18 +246,18 @@ def rows_from_file(
 
     .. code-block:: python
 
-        from sqlite_utils.utils import rows_from_file
+        from duckdb_utils.utils import rows_from_file
         import io
 
-        rows, format = rows_from_file(io.StringIO("id,name\\n1,Cleo")))
+        rows, format = rows_from_file(io.StringIO("id,name\\n1,Emme")))
         print(list(rows), format)
-        # Outputs [{'id': '1', 'name': 'Cleo'}] Format.CSV
+        # Outputs [{'id': '1', 'name': 'Emme'}] Format.CSV
 
     This defaults to attempting to automatically detect the format of the data, or you can pass in an
     explicit format using the format= option.
 
     Returns a tuple of ``(rows_generator, format_used)`` where ``rows_generator`` can be iterated over
-    to return dictionaries, while ``format_used`` is a value from the ``sqlite_utils.utils.Format`` enum:
+    to return dictionaries, while ``format_used`` is a value from the ``duckdb_utils.utils.Format`` enum:
 
     .. code-block:: python
 
@@ -268,7 +268,7 @@ def rows_from_file(
             NL = 4
 
     If a CSV or TSV file includes rows with more fields than are declared in the header a
-    ``sqlite_utils.utils.RowError`` exception will be raised when you loop over the generator.
+    ``duckdb_utils.utils.RowError`` exception will be raised when you loop over the generator.
 
     You can instead ignore the extra data by passing ``ignore_extras=True``.
 
@@ -337,19 +337,19 @@ def rows_from_file(
 
 class TypeTracker:
     """
-    Wrap an iterator of dictionaries and keep track of which SQLite column
+    Wrap an iterator of dictionaries and keep track of which DuckDB column
     types are the most likely fit for each of their keys.
 
     Example usage:
 
     .. code-block:: python
 
-        from sqlite_utils.utils import TypeTracker
-        import sqlite_utils
+        from duckdb_utils.utils import TypeTracker
+        import duckdb_utils
 
-        db = sqlite_utils.Database(memory=True)
+        db = duckdb_utils.Database(memory=True)
         tracker = TypeTracker()
-        rows = [{"id": "1", "name": "Cleo", "id": "2", "name": "Cardi"}]
+        rows = [{"id": "1", "name": "Emme", "id": "2", "name": "Cardi"}]
         db["creatures"].insert_all(tracker.wrap(rows))
         print(tracker.types)
         # Outputs {'id': 'integer', 'name': 'text'}
@@ -508,12 +508,12 @@ def hash_record(record: Dict, keys: Optional[Iterable[str]] = None):
 
     Example usage::
 
-        from sqlite_utils.utils import hash_record
+        from duckdb_utils.utils import hash_record
 
-        hashed = hash_record({"name": "Cleo", "twitter": "CleoPaws"})
+        hashed = hash_record({"name": "Emme", "twitter": "EmmePaws"})
         # Or with the keys= option:
         hashed = hash_record(
-            {"name": "Cleo", "twitter": "CleoPaws", "age": 7},
+            {"name": "Emme", "twitter": "EmmePaws", "age": 7},
             keys=("name", "twitter")
         )
 

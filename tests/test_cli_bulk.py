@@ -1,5 +1,5 @@
 from click.testing import CliRunner
-from sqlite_utils import cli, Database
+from duckdb_utils import cli, Database
 import pathlib
 import pytest
 import subprocess
@@ -9,7 +9,7 @@ import time
 
 @pytest.fixture
 def test_db_and_path(tmpdir):
-    db_path = str(pathlib.Path(tmpdir) / "data.db")
+    db_path = str(pathlib.Path(tmpdir) / "data.duckdb")
     db = Database(db_path)
     db["example"].insert_all(
         [
@@ -51,7 +51,7 @@ def test_cli_bulk_batch_size(test_db_and_path):
         [
             sys.executable,
             "-m",
-            "sqlite_utils",
+            "duckdb_utils",
             "bulk",
             db_path,
             "insert into example (id, name) values (:id, :name)",

@@ -1,64 +1,64 @@
-from sqlite_utils.db import ForeignKey, NoObviousTable
+from duckdb_utils.duckdb import ForeignKey, NoObviousTable
 import pytest
 
 
 def test_insert_m2m_single(fresh_db):
-    dogs = fresh_db["dogs"]
-    dogs.insert({"id": 1, "name": "Cleo"}, pk="id").m2m(
+    cats = fresh_db["cats"]
+    cats.insert({"id": 1, "name": "Emme"}, pk="id").m2m(
         "humans", {"id": 1, "name": "Natalie D"}, pk="id"
     )
-    assert {"dogs_humans", "humans", "dogs"} == set(fresh_db.table_names())
+    assert {"cats_humans", "humans", "cats"} == set(fresh_db.table_names())
     humans = fresh_db["humans"]
-    dogs_humans = fresh_db["dogs_humans"]
+    cats_humans = fresh_db["cats_humans"]
     assert [{"id": 1, "name": "Natalie D"}] == list(humans.rows)
-    assert [{"humans_id": 1, "dogs_id": 1}] == list(dogs_humans.rows)
+    assert [{"humans_id": 1, "cats_id": 1}] == list(cats_humans.rows)
 
 
 def test_insert_m2m_alter(fresh_db):
-    dogs = fresh_db["dogs"]
-    dogs.insert({"id": 1, "name": "Cleo"}, pk="id").m2m(
+    cats = fresh_db["cats"]
+    cats.insert({"id": 1, "name": "Emme"}, pk="id").m2m(
         "humans", {"id": 1, "name": "Natalie D"}, pk="id"
     )
-    dogs.update(1).m2m(
+    cats.update(1).m2m(
         "humans", {"id": 2, "name": "Simon W", "nerd": True}, pk="id", alter=True
     )
     assert list(fresh_db["humans"].rows) == [
         {"id": 1, "name": "Natalie D", "nerd": None},
         {"id": 2, "name": "Simon W", "nerd": 1},
     ]
-    assert list(fresh_db["dogs_humans"].rows) == [
-        {"humans_id": 1, "dogs_id": 1},
-        {"humans_id": 2, "dogs_id": 1},
+    assert list(fresh_db["cats_humans"].rows) == [
+        {"humans_id": 1, "cats_id": 1},
+        {"humans_id": 2, "cats_id": 1},
     ]
 
 
 def test_insert_m2m_list(fresh_db):
-    dogs = fresh_db["dogs"]
-    dogs.insert({"id": 1, "name": "Cleo"}, pk="id").m2m(
+    cats = fresh_db["cats"]
+    cats.insert({"id": 1, "name": "Emme"}, pk="id").m2m(
         "humans",
         [{"id": 1, "name": "Natalie D"}, {"id": 2, "name": "Simon W"}],
         pk="id",
     )
-    assert {"dogs", "humans", "dogs_humans"} == set(fresh_db.table_names())
+    assert {"cats", "humans", "cats_humans"} == set(fresh_db.table_names())
     humans = fresh_db["humans"]
-    dogs_humans = fresh_db["dogs_humans"]
-    assert [{"humans_id": 1, "dogs_id": 1}, {"humans_id": 2, "dogs_id": 1}] == list(
-        dogs_humans.rows
+    cats_humans = fresh_db["cats_humans"]
+    assert [{"humans_id": 1, "cats_id": 1}, {"humans_id": 2, "cats_id": 1}] == list(
+        cats_humans.rows
     )
     assert [{"id": 1, "name": "Natalie D"}, {"id": 2, "name": "Simon W"}] == list(
         humans.rows
     )
     assert [
         ForeignKey(
-            table="dogs_humans", column="dogs_id", other_table="dogs", other_column="id"
+            table="cats_humans", column="cats_id", other_table="cats", other_column="id"
         ),
         ForeignKey(
-            table="dogs_humans",
+            table="cats_humans",
             column="humans_id",
             other_table="humans",
             other_column="id",
         ),
-    ] == dogs_humans.foreign_keys
+    ] == cats_humans.foreign_keys
 
 
 def test_insert_m2m_iterable(fresh_db):
@@ -102,16 +102,16 @@ def test_insert_m2m_iterable(fresh_db):
 
 
 def test_m2m_with_table_objects(fresh_db):
-    dogs = fresh_db.table("dogs", pk="id")
+    cats = fresh_db.table("cats", pk="id")
     humans = fresh_db.table("humans", pk="id")
-    dogs.insert({"id": 1, "name": "Cleo"}).m2m(
+    cats.insert({"id": 1, "name": "Emme"}).m2m(
         humans, [{"id": 1, "name": "Natalie D"}, {"id": 2, "name": "Simon W"}]
     )
-    expected_tables = {"dogs", "humans", "dogs_humans"}
+    expected_tables = {"cats", "humans", "cats_humans"}
     assert expected_tables == set(fresh_db.table_names())
-    assert dogs.count == 1
+    assert cats.count == 1
     assert humans.count == 2
-    assert fresh_db["dogs_humans"].count == 2
+    assert fresh_db["cats_humans"].count == 2
 
 
 def test_m2m_lookup(fresh_db):

@@ -11,7 +11,7 @@ jQuery(function ($) {
         `<div class="admonition warning">
            <p class="first admonition-title">Note</p>
            <p class="last">
-             This documentation covers the <strong>development version</strong> of <code>sqlite-utils</code>.</p>
+             This documentation covers the <strong>development version</strong> of <code>duckdb-utils</code>.</p>
              <p>See <a href="${stableUrl}">this page</a> for the current stable release.
            </p>
         </div>`

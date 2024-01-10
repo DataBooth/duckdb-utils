@@ -37,7 +37,7 @@ jobs:
       run: pip install numpy
     - name: Install SpatiaLite
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get install libsqlite3-mod-spatialite
+      run: sudo apt-get install libduckdb-mod-spatialite
     - name: On macOS with Python 3.10 test with sqlean.py
       if: matrix.os == 'macos-latest' && matrix.python-version == '3.10'
       run: pip install sqlean.py sqlite-dump
@@ -49,7 +49,7 @@ jobs:
       run: |
         pytest -v
     - name: run mypy
-      run: mypy sqlite_utils tests
+      run: mypy duckdb_utils tests
     - name: run flake8 if Python 3.8 or higher
       if: matrix.python-version >= 3.8
       run: flake8

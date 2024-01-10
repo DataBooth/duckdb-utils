@@ -1,8 +1,8 @@
-from sqlite_utils.db import Database, ColumnDetails
-from sqlite_utils import cli
+from duckdb_utils.duckdb import Database, ColumnDetails
+from duckdb_utils import cli
 from click.testing import CliRunner
 import pytest
-import sqlite3
+import duckdb
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def db_to_analyze(fresh_db):
 
 @pytest.fixture
 def big_db_to_analyze_path(tmpdir):
-    path = str(tmpdir / "test.db")
+    path = str(tmpdir / "test.duckdb")
     db = Database(path)
     categories = {
         "A": 40,
@@ -133,8 +133,8 @@ def test_analyze_column(db_to_analyze, column, extra_kwargs, expected):
 
 @pytest.fixture
 def db_to_analyze_path(db_to_analyze, tmpdir):
-    path = str(tmpdir / "test.db")
-    db = sqlite3.connect(path)
+    path = str(tmpdir / "test.duckdb")
+    db = duckdb.connect(path)
     sql = "\n".join(db_to_analyze.iterdump())
     db.executescript(sql)
     return path
@@ -297,7 +297,7 @@ def test_analyze_table_column_all_nulls(big_db_to_analyze_path):
     ),
 )
 def test_analyze_table_validate_columns(tmpdir, args, expected_error):
-    path = str(tmpdir / "test_validate_columns.db")
+    path = str(tmpdir / "test_validate_columns.duckdb")
     db = Database(path)
     db["one"].insert(
         {

@@ -1,6 +1,6 @@
 import pytest
-from sqlite_utils import Database
-from sqlite_utils.utils import sqlite3
+from duckdb_utils import Database
+from duckdb_utils.utils import duckdb
 
 search_records = [
     {
@@ -272,7 +272,7 @@ def test_disable_fts(fresh_db, create_triggers):
     assert expected_triggers == set(
         r[0]
         for r in fresh_db.execute(
-            "select name from sqlite_master where type = 'trigger'"
+            "select name from duckdb_master where type = 'trigger'"
         ).fetchall()
     )
     # Now run .disable_fts() and confirm it worked
@@ -280,7 +280,7 @@ def test_disable_fts(fresh_db, create_triggers):
     assert (
         0
         == fresh_db.execute(
-            "select count(*) from sqlite_master where type = 'trigger'"
+            "select count(*) from duckdb_master where type = 'trigger'"
         ).fetchone()[0]
     )
     assert ["searchable"] == fresh_db.table_names()
@@ -313,14 +313,14 @@ def test_rebuild_fts(fresh_db):
 def test_rebuild_fts_invalid(fresh_db, invalid_table):
     fresh_db["not_searchable"].insert({"foo": "bar"})
     # Raise OperationalError on invalid table
-    with pytest.raises(sqlite3.OperationalError):
+    with pytest.raises(duckdb.OperationalError):
         fresh_db[invalid_table].rebuild_fts()
 
 
 @pytest.mark.parametrize("fts_version", ["FTS4", "FTS5"])
 def test_rebuild_removes_junk_docsize_rows(tmpdir, fts_version):
-    # Recreating https://github.com/simonw/sqlite-utils/issues/149
-    path = tmpdir / "test.db"
+    # Recreating https://github.com/databooth/duckdb-utils/issues/149
+    path = tmpdir / "test.duckdb"
     db = Database(str(path), recursive_triggers=False)
     licenses = [{"key": "apache2", "name": "Apache 2"}, {"key": "bsd", "name": "BSD"}]
     db["licenses"].insert_all(licenses, pk="key", replace=True)
@@ -646,7 +646,7 @@ def test_search_quote(fresh_db):
     table.insert_all(search_records)
     table.enable_fts(["text", "country"])
     query = "cat's"
-    with pytest.raises(sqlite3.OperationalError):
+    with pytest.raises(duckdb.OperationalError):
         list(table.search(query))
     # No exception with quote=True
     list(table.search(query, quote=True))

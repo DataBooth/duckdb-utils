@@ -13,7 +13,7 @@
 @lint:
   pipenv run black . --check
   pipenv run flake8
-  pipenv run mypy sqlite_utils tests
+  pipenv run mypy duckdb_utils tests
   pipenv run cog --check README.md docs/*.rst
   pipenv run codespell docs/*.rst --ignore-words docs/codespell-ignore-words.txt
 

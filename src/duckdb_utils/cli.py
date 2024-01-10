@@ -5,11 +5,11 @@ from datetime import datetime
 import hashlib
 import pathlib
 from runpy import run_module
-import sqlite_utils
-from sqlite_utils.db import AlterError, BadMultiValues, DescIndex, NoTable
-from sqlite_utils.plugins import pm, get_plugins
-from sqlite_utils.utils import maximize_csv_field_size_limit
-from sqlite_utils import recipes
+import duckdb_utils
+from duckdb_utils.duckdb import AlterError, BadMultiValues, DescIndex, NoTable
+from duckdb_utils.plugins import pm, get_plugins
+from duckdb_utils.utils import maximize_csv_field_size_limit
+from duckdb_utils import recipes
 import textwrap
 import inspect
 import io
@@ -27,7 +27,7 @@ from .utils import (
     file_progress,
     find_spatialite,
     flatten as _flatten,
-    sqlite3,
+    duckdb,
     decode_base64_values,
     progressbar,
     rows_from_file,
@@ -111,7 +111,7 @@ def load_extension_option(fn):
     return click.option(
         "--load-extension",
         multiple=True,
-        help="Path to SQLite extension, with optional :entrypoint",
+        help="Path to DuckDB extension, with optional :entrypoint",
     )(fn)
 
 
@@ -123,7 +123,7 @@ def load_extension_option(fn):
 )
 @click.version_option()
 def cli():
-    "Commands for interacting with a SQLite database"
+    "Commands for interacting with a DuckDB database"
     pass
 
 
@@ -183,9 +183,9 @@ def tables(
     Example:
 
     \b
-        sqlite-utils tables trees.db
+        duckdb-utils tables trees.duckdb
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     headers = ["view" if views else "table"]
     if counts:
@@ -270,7 +270,7 @@ def views(
     Example:
 
     \b
-        sqlite-utils views trees.db
+        duckdb-utils views trees.duckdb
     """
     tables.callback(
         path=path,
@@ -307,9 +307,9 @@ def optimize(path, tables, no_vacuum, load_extension):
     Example:
 
     \b
-        sqlite-utils optimize chickens.db
+        duckdb-utils optimize seagulls.duckdb
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     if not tables:
         tables = db.table_names(fts4=True) + db.table_names(fts5=True)
@@ -334,9 +334,9 @@ def rebuild_fts(path, tables, load_extension):
     Example:
 
     \b
-        sqlite-utils rebuild-fts chickens.db chickens
+        duckdb-utils rebuild-fts seagulls.duckdb seagulls
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     if not tables:
         tables = db.table_names(fts4=True) + db.table_names(fts5=True)
@@ -358,9 +358,9 @@ def analyze(path, names):
     Example:
 
     \b
-        sqlite-utils analyze chickens.db
+        duckdb-utils analyze seagulls.duckdb
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     try:
         if names:
             for name in names:
@@ -383,9 +383,9 @@ def vacuum(path):
     Example:
 
     \b
-        sqlite-utils vacuum chickens.db
+        duckdb-utils vacuum seagulls.duckdb
     """
-    sqlite_utils.Database(path).vacuum()
+    duckdb_utils.Database(path).vacuum()
 
 
 @cli.command()
@@ -401,9 +401,9 @@ def dump(path, load_extension):
     Example:
 
     \b
-        sqlite-utils dump chickens.db
+        duckdb-utils dump seagulls.duckdb
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     for line in db.iterdump():
         click.echo(line)
@@ -462,9 +462,9 @@ def add_column(
     Example:
 
     \b
-        sqlite-utils add-column chickens.db chickens weight float
+        duckdb-utils add-column seagulls.duckdb seagulls weight float
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     try:
         db[table].add_column(
@@ -499,9 +499,9 @@ def add_foreign_key(
 
     Example:
 
-        sqlite-utils add-foreign-key my.db books author_id authors id
+        duckdb-utils add-foreign-key my.duckdb books author_id authors id
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     try:
         db[table].add_foreign_key(column, other_table, other_column, ignore=ignore)
@@ -524,11 +524,11 @@ def add_foreign_keys(path, foreign_key, load_extension):
     Example:
 
     \b
-        sqlite-utils add-foreign-keys my.db \\
+        duckdb-utils add-foreign-keys my.duckdb \\
             books author_id authors id \\
             authors country_id countries id
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     if len(foreign_key) % 4 != 0:
         raise click.ClickException(
@@ -557,9 +557,9 @@ def index_foreign_keys(path, load_extension):
     Example:
 
     \b
-        sqlite-utils index-foreign-keys chickens.db
+        duckdb-utils index-foreign-keys seagulls.duckdb
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     db.index_foreign_keys()
 
@@ -596,14 +596,14 @@ def create_index(
     Example:
 
     \b
-        sqlite-utils create-index chickens.db chickens name
+        duckdb-utils create-index seagulls.duckdb seagulls name
 
     To create an index in descending order:
 
     \b
-        sqlite-utils create-index chickens.db chickens -- -name
+        duckdb-utils create-index seagulls.duckdb seagulls -- -name
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     # Treat -prefix as descending for columns
     columns = []
@@ -651,7 +651,7 @@ def enable_fts(
     Example:
 
     \b
-        sqlite-utils enable-fts chickens.db chickens name
+        duckdb-utils enable-fts seagulls.duckdb seagulls name
     """
     fts_version = "FTS5"
     if fts4 and fts5:
@@ -660,7 +660,7 @@ def enable_fts(
     elif fts4:
         fts_version = "FTS4"
 
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     try:
         db[table].enable_fts(
@@ -689,9 +689,9 @@ def populate_fts(path, table, column, load_extension):
     Example:
 
     \b
-        sqlite-utils populate-fts chickens.db chickens name
+        duckdb-utils populate-fts seagulls.duckdb seagulls name
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     db[table].populate_fts(column)
 
@@ -710,9 +710,9 @@ def disable_fts(path, table, load_extension):
     Example:
 
     \b
-        sqlite-utils disable-fts chickens.db chickens
+        duckdb-utils disable-fts seagulls.duckdb seagulls
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     db[table].disable_fts()
 
@@ -731,10 +731,10 @@ def enable_wal(path, load_extension):
     Example:
 
     \b
-        sqlite-utils enable-wal chickens.db
+        duckdb-utils enable-wal seagulls.duckdb
     """
     for path_ in path:
-        db = sqlite_utils.Database(path_)
+        db = duckdb_utils.Database(path_)
         _load_extensions(db, load_extension)
         db.enable_wal()
 
@@ -753,10 +753,10 @@ def disable_wal(path, load_extension):
     Example:
 
     \b
-        sqlite-utils disable-wal chickens.db
+        duckdb-utils disable-wal seagulls.duckdb
     """
     for path_ in path:
-        db = sqlite_utils.Database(path_)
+        db = duckdb_utils.Database(path_)
         _load_extensions(db, load_extension)
         db.disable_wal()
 
@@ -775,9 +775,9 @@ def enable_counts(path, tables, load_extension):
     Example:
 
     \b
-        sqlite-utils enable-counts chickens.db
+        duckdb-utils enable-counts seagulls.duckdb
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     if not tables:
         db.enable_counts()
@@ -803,9 +803,9 @@ def reset_counts(path, load_extension):
     Example:
 
     \b
-        sqlite-utils reset-counts chickens.db
+        duckdb-utils reset-counts seagulls.duckdb
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     db.reset_counts()
 
@@ -899,7 +899,7 @@ def insert_upsert_options(*, require_pk=False):
                     "-d",
                     "--detect-types",
                     is_flag=True,
-                    envvar="SQLITE_UTILS_DETECT_TYPES",
+                    envvar="duckdb_UTILS_DETECT_TYPES",
                     help="Detect types for columns in CSV/TSV data",
                 ),
                 click.option(
@@ -959,7 +959,7 @@ def insert_upsert_implementation(
     functions=None,
     strict=False,
 ):
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     if functions:
         _register_functions(db, functions)
@@ -1202,7 +1202,7 @@ def insert(
 
     Example:
 
-        echo '{"name": "Lila"}' | sqlite-utils insert data.db chickens -
+        echo '{"name": "Lila"}' | duckdb-utils insert data.duckdb seagulls -
 
     By default the input is expected to be a JSON object or array of objects.
 
@@ -1223,7 +1223,7 @@ def insert(
     to floating point numbers:
 
     \b
-        sqlite-utils insert plants.db plants plants.csv --csv --convert '
+        duckdb-utils insert plants.duckdb plants plants.csv --csv --convert '
           return {
             "name": row["name"].upper(),
             "latitude": float(row["latitude"]),
@@ -1237,7 +1237,7 @@ def insert(
     insert. This example inserts one record per word in the input:
 
     \b
-        echo 'A bunch of words' | sqlite-utils insert words.db words - \\
+        echo 'A bunch of words' | duckdb-utils insert words.duckdb words - \\
           --text --convert '({"word": w} for w in text.split())'
     """
     try:
@@ -1322,7 +1322,7 @@ def upsert(
         echo '[
             {"id": 1, "name": "Lila"},
             {"id": 2, "name": "Suna"}
-        ]' | sqlite-utils upsert data.db chickens - --pk id
+        ]' | duckdb-utils upsert data.duckdb seagulls - --pk id
     """
     try:
         insert_upsert_implementation(
@@ -1405,8 +1405,8 @@ def bulk(
         echo '[
             {"id": 1, "name": "Lila2"},
             {"id": 2, "name": "Suna2"}
-        ]' | sqlite-utils bulk data.db '
-            update chickens set name = :name where id = :id
+        ]' | duckdb-utils bulk data.duckdb '
+            update seagulls set name = :name where id = :id
         ' -
     """
     try:
@@ -1441,7 +1441,7 @@ def bulk(
             bulk_sql=sql,
             functions=functions,
         )
-    except (OperationalError, sqlite3.IntegrityError) as e:
+    except (OperationalError, duckdb.IntegrityError) as e:
         raise click.ClickException(str(e))
 
 
@@ -1464,9 +1464,9 @@ def create_database(path, enable_wal, init_spatialite, load_extension):
     Example:
 
     \b
-        sqlite-utils create-database trees.db
+        duckdb-utils create-database trees.duckdb
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     if enable_wal:
         db.enable_wal()
 
@@ -1547,7 +1547,7 @@ def create_table(
     name, type pairs, for example:
 
     \b
-        sqlite-utils create-table my.db people \\
+        duckdb-utils create-table my.duckdb people \\
             id integer \\
             name text \\
             height float \\
@@ -1555,7 +1555,7 @@ def create_table(
 
     Valid column types are text, integer, float and blob.
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     if len(columns) % 2 == 1:
         raise click.ClickException(
@@ -1606,7 +1606,7 @@ def duplicate(path, table, new_table, ignore, load_extension):
     """
     Create a duplicate of this table, copying across the schema and all row data.
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     try:
         db[table].duplicate(new_table)
@@ -1629,11 +1629,11 @@ def rename_table(path, table, new_name, ignore, load_extension):
     """
     Rename this table.
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     try:
         db.rename_table(table, new_name)
-    except sqlite3.OperationalError as ex:
+    except duckdb.OperationalError as ex:
         if not ignore:
             raise click.ClickException(
                 'Table "{}" could not be renamed. {}'.format(table, str(ex))
@@ -1655,9 +1655,9 @@ def drop_table(path, table, ignore, load_extension):
     Example:
 
     \b
-        sqlite-utils drop-table chickens.db chickens
+        duckdb-utils drop-table seagulls.duckdb seagulls
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     try:
         db[table].drop(ignore=ignore)
@@ -1690,10 +1690,10 @@ def create_view(path, view, select, ignore, replace, load_extension):
     Example:
 
     \b
-        sqlite-utils create-view chickens.db heavy_chickens \\
-          'select * from chickens where weight > 3'
+        duckdb-utils create-view seagulls.duckdb heavy_seagulls \\
+          'select * from seagulls where weight > 3'
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     # Does view already exist?
     if view in db.view_names():
@@ -1725,9 +1725,9 @@ def drop_view(path, view, ignore, load_extension):
     Example:
 
     \b
-        sqlite-utils drop-view chickens.db heavy_chickens
+        duckdb-utils drop-view seagulls.duckdb heavy_seagulls
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     try:
         db[view].drop(ignore=ignore)
@@ -1785,11 +1785,11 @@ def query(
     Example:
 
     \b
-        sqlite-utils data.db \\
-            "select * from chickens where age > :age" \\
+        duckdb-utils data.duckdb \\
+            "select * from seagulls where age > :age" \\
             -p age 1
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     for alias, attach_path in attach:
         db.attach(alias, attach_path)
     _load_extensions(db, load_extension)
@@ -1900,28 +1900,28 @@ def memory(
     To import data from CSV, TSV or JSON files pass them on the command-line:
 
     \b
-        sqlite-utils memory one.csv two.json \\
+        duckdb-utils memory one.csv two.json \\
             "select * from one join two on one.two_id = two.id"
 
     For data piped into the tool from standard input, use "-" or "stdin":
 
     \b
-        cat animals.csv | sqlite-utils memory - \\
+        cat animals.csv | duckdb-utils memory - \\
             "select * from stdin where species = 'dog'"
 
     The format of the data will be automatically detected. You can specify the format
     explicitly using :json, :csv, :tsv or :nl (for newline-delimited JSON) - for example:
 
     \b
-        cat animals.csv | sqlite-utils memory stdin:csv places.dat:nl \\
+        cat animals.csv | duckdb-utils memory stdin:csv places.dat:nl \\
             "select * from stdin where place_id in (select id from places)"
 
     Use --schema to view the SQL schema of any imported files:
 
     \b
-        sqlite-utils memory animals.csv --schema
+        duckdb-utils memory animals.csv --schema
     """
-    db = sqlite_utils.Database(memory=True)
+    db = duckdb_utils.Database(memory=True)
     # If --dump or --save or --analyze used but no paths detected, assume SQL query is a path:
     if (dump or save or schema or analyze) and not paths:
         paths = [sql]
@@ -1981,7 +1981,7 @@ def memory(
         return
 
     if save:
-        db2 = sqlite_utils.Database(save)
+        db2 = duckdb_utils.Database(save)
         for line in db.iterdump():
             db2.execute(line)
         return
@@ -2113,9 +2113,9 @@ def search(
 
     Example:
 
-        sqlite-utils search data.db chickens lila
+        duckdb-utils search data.duckdb seagulls lila
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     # Check table exists
     table_obj = db[dbtable]
@@ -2219,7 +2219,7 @@ def rows(
     Example:
 
     \b
-        sqlite-utils rows trees.db Trees
+        duckdb-utils rows trees.duckdb Trees
     """
     columns = "*"
     if column:
@@ -2279,11 +2279,11 @@ def triggers(
     Example:
 
     \b
-        sqlite-utils triggers trees.db
+        duckdb-utils triggers trees.duckdb
     """
-    sql = "select name, tbl_name as [table], sql from sqlite_master where type = 'trigger'"
+    sql = "select name, tbl_name as [table], sql from duckdb_master where type = 'trigger'"
     if tables:
-        quote = sqlite_utils.Database(memory=True).quote
+        quote = duckdb_utils.Database(memory=True).quote
         sql += " and [table] in ({})".format(
             ", ".join(quote(table) for table in tables)
         )
@@ -2334,22 +2334,22 @@ def indexes(
     Example:
 
     \b
-        sqlite-utils indexes trees.db Trees
+        duckdb-utils indexes trees.duckdb Trees
     """
     sql = """
     select
-      sqlite_master.name as "table",
+      duckdb_master.name as "table",
       indexes.name as index_name,
       xinfo.*
-    from sqlite_master
-      join pragma_index_list(sqlite_master.name) indexes
+    from duckdb_master
+      join pragma_index_list(duckdb_master.name) indexes
       join pragma_index_xinfo(index_name) xinfo
     where
-      sqlite_master.type = 'table'
+      duckdb_master.type = 'table'
     """
     if tables:
-        quote = sqlite_utils.Database(memory=True).quote
-        sql += " and sqlite_master.name in ({})".format(
+        quote = duckdb_utils.Database(memory=True).quote
+        sql += " and duckdb_master.name in ({})".format(
             ", ".join(quote(table) for table in tables)
         )
     if not aux:
@@ -2388,9 +2388,9 @@ def schema(
     Example:
 
     \b
-        sqlite-utils schema trees.db
+        duckdb-utils schema trees.duckdb
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     if tables:
         for table in tables:
@@ -2476,11 +2476,11 @@ def transform(
     Example:
 
     \b
-        sqlite-utils transform mydb.db mytable \\
+        duckdb-utils transform mydb.duckdb mytable \\
             --drop column1 \\
             --rename column2 column_renamed
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     types = {}
     kwargs = {}
@@ -2561,9 +2561,9 @@ def extract(
     Example:
 
     \b
-        sqlite-utils extract trees.db Street_Trees species
+        duckdb-utils extract trees.duckdb Street_Trees species
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     kwargs = dict(
         columns=columns,
@@ -2627,7 +2627,7 @@ def insert_files(
     Example:
 
     \b
-        sqlite-utils insert-files pics.db images *.gif \\
+        duckdb-utils insert-files pics.duckdb images *.gif \\
             -c name:name \\
             -c content:content \\
             -c content_hash:sha256 \\
@@ -2707,7 +2707,7 @@ def insert_files(
                         row[colname] = name
                 yield row
 
-        db = sqlite_utils.Database(path)
+        db = duckdb_utils.Database(path)
         _load_extensions(db, load_extension)
         try:
             with db.conn:
@@ -2759,9 +2759,9 @@ def analyze_tables(
     Example:
 
     \b
-        sqlite-utils analyze-tables data.db trees
+        duckdb-utils analyze-tables data.duckdb trees
     """
-    db = sqlite_utils.Database(path)
+    db = duckdb_utils.Database(path)
     _load_extensions(db, load_extension)
     _analyze(db, tables, columns, save, common_limit, no_most, no_least)
 
@@ -2845,7 +2845,7 @@ def _analyze(db, tables, columns, save, common_limit=10, no_most=False, no_least
     help="Install a project in editable mode from this path",
 )
 def install(packages, upgrade, editable):
-    """Install packages from PyPI into the same environment as sqlite-utils"""
+    """Install packages from PyPI into the same environment as duckdb-utils"""
     args = ["pip", "install"]
     if upgrade:
         args += ["--upgrade"]
@@ -2860,7 +2860,7 @@ def install(packages, upgrade, editable):
 @click.argument("packages", nargs=-1, required=True)
 @click.option("-y", "--yes", is_flag=True, help="Don't ask for confirmation")
 def uninstall(packages, yes):
-    """Uninstall Python packages from the sqlite-utils environment"""
+    """Uninstall Python packages from the duckdb-utils environment"""
     sys.argv = ["pip", "uninstall"] + list(packages) + (["-y"] if yes else [])
     run_module("pip", run_name="__main__")
 
@@ -2871,7 +2871,7 @@ def _generate_convert_help():
     Convert columns using Python code you supply. For example:
 
     \b
-        sqlite-utils convert my.db mytable mycolumn \\
+        duckdb-utils convert my.duckdb mytable mycolumn \\
             '"\\n".join(textwrap.wrap(value, 10))' \\
             --import=textwrap
 
@@ -2900,7 +2900,7 @@ def _generate_convert_help():
     You can use these recipes like so:
 
     \b
-        sqlite-utils convert my.db mytable mycolumn \\
+        duckdb-utils convert my.duckdb mytable mycolumn \\
             'r.jsonsplit(value, delimiter=":")'
     """
     ).strip()
@@ -2961,8 +2961,8 @@ def convert(
     silent,
     pdb_,
 ):
-    sqlite3.enable_callback_tracebacks(True)
-    db = sqlite_utils.Database(db_path)
+    duckdb.enable_callback_tracebacks(True)
+    db = duckdb_utils.Database(db_path)
     if output is not None and len(columns) > 1:
         raise click.ClickException("Cannot use --output with more than one column")
     if multi and len(columns) > 1:
@@ -3105,7 +3105,7 @@ def add_geometry_column(
     \n\n
     By default, this command will try to load the SpatiaLite extension from usual paths.
     To load it from a specific path, use --load-extension."""
-    db = sqlite_utils.Database(db_path)
+    db = duckdb_utils.Database(db_path)
     if not db[table].exists():
         raise click.ClickException(
             "You must create a table before adding a geometry column"
@@ -3137,7 +3137,7 @@ def create_spatial_index(db_path, table, column_name, load_extension):
     \n\n
     By default, this command will try to load the SpatiaLite extension from usual paths.
     To load it from a specific path, use --load-extension."""
-    db = sqlite_utils.Database(db_path)
+    db = duckdb_utils.Database(db_path)
     if not db[table].exists():
         raise click.ClickException(
             "You must create a table and add a geometry column before creating a spatial index"
@@ -3270,7 +3270,7 @@ def _load_extensions(db, load_extension):
 
 def _register_functions(db, functions):
     # Register any Python functions as SQL functions:
-    sqlite3.enable_callback_tracebacks(True)
+    duckdb.enable_callback_tracebacks(True)
     globals = {}
     try:
         exec(functions, globals)

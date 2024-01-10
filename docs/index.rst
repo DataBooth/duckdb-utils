@@ -1,31 +1,31 @@
 =======================
- sqlite-utils |version|
+ duckdb-utils |version|
 =======================
 
 |PyPI| |Changelog| |CI| |License| |discord|
 
-.. |PyPI| image:: https://img.shields.io/pypi/v/sqlite-utils.svg
-   :target: https://pypi.org/project/sqlite-utils/
-.. |Changelog| image:: https://img.shields.io/github/v/release/simonw/sqlite-utils?include_prereleases&label=changelog
-   :target: https://sqlite-utils.datasette.io/en/stable/changelog.html
-.. |CI| image:: https://github.com/simonw/sqlite-utils/workflows/Test/badge.svg
-   :target: https://github.com/simonw/sqlite-utils/actions
+.. |PyPI| image:: https://img.shields.io/pypi/v/duckdb-utils.svg
+   :target: https://pypi.org/project/duckdb-utils/
+.. |Changelog| image:: https://img.shields.io/github/v/release/databooth/duckdb-utils?include_prereleases&label=changelog
+   :target: https://duckdb-utils.databooth.com.au/en/stable/changelog.html
+.. |CI| image:: https://github.com/databooth/duckdb-utils/workflows/Test/badge.svg
+   :target: https://github.com/databooth/duckdb-utils/actions
 .. |License| image:: https://img.shields.io/badge/license-Apache%202.0-blue.svg
-   :target: https://github.com/simonw/sqlite-utils/blob/main/LICENSE
+   :target: https://github.com/databooth/duckdb-utils/blob/main/LICENSE
 .. |discord| image:: https://img.shields.io/discord/823971286308356157?label=discord
    :target: https://discord.gg/Ass7bCAMDw
 
-*CLI tool and Python library for manipulating SQLite databases*
+*CLI tool and Python library for manipulating DuckDB databases*
 
-This library and command-line utility helps create SQLite databases from an existing collection of data.
+This library and command-line utility helps create DuckDB databases from an existing collection of data.
 
-Most of the functionality is available as either a Python API or through the ``sqlite-utils`` command-line tool.
+Most of the functionality is available as either a Python API or through the ``duckdb-utils`` command-line tool.
 
-sqlite-utils is not intended to be a full ORM: the focus is utility helpers to make creating the initial database and populating it with data as productive as possible.
+duckdb-utils is not intended to be a full ORM: the focus is utility helpers to make creating the initial database and populating it with data as productive as possible.
 
-It is designed as a useful complement to `Datasette <https://datasette.io/>`_.
+It is designed as a useful complement to `Datasette <https://databooth.com.au/>`_.
 
-`Cleaning data with sqlite-utils and Datasette <https://datasette.io/tutorials/clean-data>`_ provides a tutorial introduction (and accompanying ten minute video) about using this tool.
+`Cleaning data with duckdb-utils and Datasette <https://databooth.com.au/tutorials/clean-data>`_ provides a tutorial introduction (and accompanying ten minute video) about using this tool.
 
 Contents
 --------

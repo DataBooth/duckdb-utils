@@ -1,4 +1,4 @@
-from sqlite_utils import Database
+from duckdb_utils import Database
 
 
 def test_tracer():
@@ -6,29 +6,29 @@ def test_tracer():
     db = Database(
         memory=True, tracer=lambda sql, params: collected.append((sql, params))
     )
-    db["dogs"].insert({"name": "Cleopaws"})
-    db["dogs"].enable_fts(["name"])
-    db["dogs"].search("Cleopaws")
+    db["cats"].insert({"name": "Emmepaws"})
+    db["cats"].enable_fts(["name"])
+    db["cats"].search("Emmepaws")
     assert collected == [
         ("PRAGMA recursive_triggers=on;", None),
-        ("select name from sqlite_master where type = 'view'", None),
-        ("select name from sqlite_master where type = 'table'", None),
-        ("select name from sqlite_master where type = 'view'", None),
-        ("select name from sqlite_master where type = 'table'", None),
-        ("select name from sqlite_master where type = 'view'", None),
-        ("CREATE TABLE [dogs] (\n   [name] TEXT\n);\n        ", None),
-        ("select name from sqlite_master where type = 'view'", None),
-        ("INSERT INTO [dogs] ([name]) VALUES (?);", ["Cleopaws"]),
-        ("select name from sqlite_master where type = 'view'", None),
+        ("select name from duckdb_master where type = 'view'", None),
+        ("select name from duckdb_master where type = 'table'", None),
+        ("select name from duckdb_master where type = 'view'", None),
+        ("select name from duckdb_master where type = 'table'", None),
+        ("select name from duckdb_master where type = 'view'", None),
+        ("CREATE TABLE [cats] (\n   [name] TEXT\n);\n        ", None),
+        ("select name from duckdb_master where type = 'view'", None),
+        ("INSERT INTO [cats] ([name]) VALUES (?);", ["Emmepaws"]),
+        ("select name from duckdb_master where type = 'view'", None),
         (
-            "CREATE VIRTUAL TABLE [dogs_fts] USING FTS5 (\n    [name],\n    content=[dogs]\n)",
+            "CREATE VIRTUAL TABLE [cats_fts] USING FTS5 (\n    [name],\n    content=[cats]\n)",
             None,
         ),
         (
-            "INSERT INTO [dogs_fts] (rowid, [name])\n    SELECT rowid, [name] FROM [dogs];",
+            "INSERT INTO [cats_fts] (rowid, [name])\n    SELECT rowid, [name] FROM [cats];",
             None,
         ),
-        ("select name from sqlite_master where type = 'view'", None),
+        ("select name from duckdb_master where type = 'view'", None),
     ]
 
 
@@ -40,20 +40,20 @@ def test_with_tracer():
 
     db = Database(memory=True)
 
-    db["dogs"].insert({"name": "Cleopaws"})
-    db["dogs"].enable_fts(["name"])
+    db["cats"].insert({"name": "Emmepaws"})
+    db["cats"].enable_fts(["name"])
 
     assert len(collected) == 0
 
     with db.tracer(tracer):
-        list(db["dogs"].search("Cleopaws"))
+        list(db["cats"].search("Emmepaws"))
 
     assert len(collected) == 5
     assert collected == [
-        ("select name from sqlite_master where type = 'view'", None),
+        ("select name from duckdb_master where type = 'view'", None),
         (
             (
-                "SELECT name FROM sqlite_master\n"
+                "SELECT name FROM duckdb_master\n"
                 "    WHERE rootpage = 0\n"
                 "    AND (\n"
                 "        sql LIKE :like\n"
@@ -64,36 +64,36 @@ def test_with_tracer():
                 "        )\n"
                 "    )",
                 {
-                    "like": "%VIRTUAL TABLE%USING FTS%content=[dogs]%",
-                    "like2": '%VIRTUAL TABLE%USING FTS%content="dogs"%',
-                    "table": "dogs",
+                    "like": "%VIRTUAL TABLE%USING FTS%content=[cats]%",
+                    "like2": '%VIRTUAL TABLE%USING FTS%content="cats"%',
+                    "table": "cats",
                 },
             )
         ),
-        ("select name from sqlite_master where type = 'view'", None),
-        ("select sql from sqlite_master where name = ?", ("dogs_fts",)),
+        ("select name from duckdb_master where type = 'view'", None),
+        ("select sql from duckdb_master where name = ?", ("cats_fts",)),
         (
             (
                 "with original as (\n"
                 "    select\n"
                 "        rowid,\n"
                 "        *\n"
-                "    from [dogs]\n"
+                "    from [cats]\n"
                 ")\n"
                 "select\n"
                 "    [original].*\n"
                 "from\n"
                 "    [original]\n"
-                "    join [dogs_fts] on [original].rowid = [dogs_fts].rowid\n"
+                "    join [cats_fts] on [original].rowid = [cats_fts].rowid\n"
                 "where\n"
-                "    [dogs_fts] match :query\n"
+                "    [cats_fts] match :query\n"
                 "order by\n"
-                "    [dogs_fts].rank"
+                "    [cats_fts].rank"
             ),
-            {"query": "Cleopaws"},
+            {"query": "Emmepaws"},
         ),
     ]
 
     # Outside the with block collected should not be appended to
-    db["dogs"].insert({"name": "Cleopaws"})
+    db["cats"].insert({"name": "Emmepaws"})
     assert len(collected) == 5

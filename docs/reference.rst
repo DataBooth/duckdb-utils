@@ -9,10 +9,10 @@
 
 .. _reference_db_database:
 
-sqlite_utils.db.Database
+duckdb_utils.duckdb.Database
 ========================
 
-.. autoclass:: sqlite_utils.db.Database
+.. autoclass:: duckdb_utils.duckdb.Database
     :members:
     :undoc-members:
     :special-members: __getitem__
@@ -20,22 +20,22 @@ sqlite_utils.db.Database
 
 .. _reference_db_queryable:
 
-sqlite_utils.db.Queryable
+duckdb_utils.duckdb.Queryable
 =========================
 
 :ref:`Table <reference_db_table>` and :ref:`View <reference_db_view>` are  both subclasses of ``Queryable``, providing access to the following methods:
 
-.. autoclass:: sqlite_utils.db.Queryable
+.. autoclass:: duckdb_utils.duckdb.Queryable
     :members:
     :undoc-members:
     :exclude-members: execute_count
 
 .. _reference_db_table:
 
-sqlite_utils.db.Table
+duckdb_utils.duckdb.Table
 =====================
 
-.. autoclass:: sqlite_utils.db.Table
+.. autoclass:: duckdb_utils.duckdb.Table
     :members:
     :undoc-members:
     :show-inheritance:
@@ -43,10 +43,10 @@ sqlite_utils.db.Table
 
 .. _reference_db_view:
 
-sqlite_utils.db.View
+duckdb_utils.duckdb.View
 ====================
 
-.. autoclass:: sqlite_utils.db.View
+.. autoclass:: duckdb_utils.duckdb.View
     :members:
     :undoc-members:
     :show-inheritance:
@@ -58,53 +58,53 @@ Other
 
 .. _reference_db_other_column:
 
-sqlite_utils.db.Column
+duckdb_utils.duckdb.Column
 ----------------------
 
-.. autoclass:: sqlite_utils.db.Column
+.. autoclass:: duckdb_utils.duckdb.Column
 
 .. _reference_db_other_column_details:
 
-sqlite_utils.db.ColumnDetails
+duckdb_utils.duckdb.ColumnDetails
 -----------------------------
 
-.. autoclass:: sqlite_utils.db.ColumnDetails
+.. autoclass:: duckdb_utils.duckdb.ColumnDetails
 
-sqlite_utils.utils
+duckdb_utils.utils
 ==================
 
 .. _reference_utils_hash_record:
 
-sqlite_utils.utils.hash_record
+duckdb_utils.utils.hash_record
 ------------------------------
 
-.. autofunction:: sqlite_utils.utils.hash_record
+.. autofunction:: duckdb_utils.utils.hash_record
 
 .. _reference_utils_rows_from_file:
 
-sqlite_utils.utils.rows_from_file
+duckdb_utils.utils.rows_from_file
 ---------------------------------
 
-.. autofunction:: sqlite_utils.utils.rows_from_file
+.. autofunction:: duckdb_utils.utils.rows_from_file
 
 .. _reference_utils_typetracker:
 
-sqlite_utils.utils.TypeTracker
+duckdb_utils.utils.TypeTracker
 ------------------------------
 
-.. autoclass:: sqlite_utils.utils.TypeTracker
+.. autoclass:: duckdb_utils.utils.TypeTracker
    :members: wrap, types
 
 .. _reference_utils_chunks:
 
-sqlite_utils.utils.chunks
+duckdb_utils.utils.chunks
 -------------------------
 
-.. autofunction:: sqlite_utils.utils.chunks
+.. autofunction:: duckdb_utils.utils.chunks
 
 .. _reference_utils_flatten:
 
-sqlite_utils.utils.flatten
+duckdb_utils.utils.flatten
 --------------------------
 
-.. autofunction:: sqlite_utils.utils.flatten
+.. autofunction:: duckdb_utils.utils.flatten

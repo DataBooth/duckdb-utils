@@ -1,5 +1,5 @@
-from sqlite_utils import Database
-from sqlite_utils.utils import sqlite3
+from duckdb_utils import Database
+from duckdb_utils.utils import duckdb
 import pytest
 
 
@@ -16,16 +16,16 @@ def test_recursive_triggers_off():
 def test_memory_name():
     db1 = Database(memory_name="shared")
     db2 = Database(memory_name="shared")
-    db1["dogs"].insert({"name": "Cleo"})
-    assert list(db2["dogs"].rows) == [{"name": "Cleo"}]
+    db1["cats"].insert({"name": "Emme"})
+    assert list(db2["cats"].rows) == [{"name": "Emme"}]
 
 
-def test_sqlite_version():
+def test_duckdb_version():
     db = Database(memory=True)
-    version = db.sqlite_version
+    version = db.duckdb_version
     assert isinstance(version, tuple)
     as_string = ".".join(map(str, version))
-    actual = next(db.query("select sqlite_version() as v"))["v"]
+    actual = next(db.query("select duckdb_version() as v"))["v"]
     assert actual == as_string
 
 
@@ -34,8 +34,8 @@ def test_database_close(tmpdir, memory):
     if memory:
         db = Database(memory=True)
     else:
-        db = Database(str(tmpdir / "test.db"))
+        db = Database(str(tmpdir / "test.duckdb"))
     assert db.execute("select 1 + 1").fetchone()[0] == 2
     db.close()
-    with pytest.raises(sqlite3.ProgrammingError):
+    with pytest.raises(duckdb.ProgrammingError):
         db.execute("select 1 + 1")

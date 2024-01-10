@@ -3,9 +3,9 @@ import pytest
 
 @pytest.fixture
 def db(fresh_db):
-    fresh_db["one_index"].insert({"id": 1, "name": "Cleo"}, pk="id")
+    fresh_db["one_index"].insert({"id": 1, "name": "Emme"}, pk="id")
     fresh_db["one_index"].create_index(["name"])
-    fresh_db["two_indexes"].insert({"id": 1, "name": "Cleo", "species": "dog"}, pk="id")
+    fresh_db["two_indexes"].insert({"id": 1, "name": "Emme", "species": "dog"}, pk="id")
     fresh_db["two_indexes"].create_index(["name"])
     fresh_db["two_indexes"].create_index(["species"])
     return fresh_db
@@ -15,9 +15,9 @@ def test_analyze_whole_database(db):
     assert set(db.table_names()) == {"one_index", "two_indexes"}
     db.analyze()
     assert set(db.table_names()).issuperset(
-        {"one_index", "two_indexes", "sqlite_stat1"}
+        {"one_index", "two_indexes", "duckdb_stat1"}
     )
-    assert list(db["sqlite_stat1"].rows) == [
+    assert list(db["duckdb_stat1"].rows) == [
         {"tbl": "two_indexes", "idx": "idx_two_indexes_species", "stat": "1 1"},
         {"tbl": "two_indexes", "idx": "idx_two_indexes_name", "stat": "1 1"},
         {"tbl": "one_index", "idx": "idx_one_index_name", "stat": "1 1"},
@@ -33,9 +33,9 @@ def test_analyze_one_table(db, method):
         db["one_index"].analyze()
 
     assert set(db.table_names()).issuperset(
-        {"one_index", "two_indexes", "sqlite_stat1"}
+        {"one_index", "two_indexes", "duckdb_stat1"}
     )
-    assert list(db["sqlite_stat1"].rows) == [
+    assert list(db["duckdb_stat1"].rows) == [
         {"tbl": "one_index", "idx": "idx_one_index_name", "stat": "1 1"}
     ]
 
@@ -44,8 +44,8 @@ def test_analyze_index_by_name(db):
     assert set(db.table_names()) == {"one_index", "two_indexes"}
     db.analyze("idx_two_indexes_species")
     assert set(db.table_names()).issuperset(
-        {"one_index", "two_indexes", "sqlite_stat1"}
+        {"one_index", "two_indexes", "duckdb_stat1"}
     )
-    assert list(db["sqlite_stat1"].rows) == [
+    assert list(db["duckdb_stat1"].rows) == [
         {"tbl": "two_indexes", "idx": "idx_two_indexes_species", "stat": "1 1"},
     ]

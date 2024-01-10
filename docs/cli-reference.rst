@@ -4,13 +4,13 @@
  CLI reference
 ===============
 
-This page lists the ``--help`` for every ``sqlite-utils`` CLI sub-command.
+This page lists the ``--help`` for every ``duckdb-utils`` CLI sub-command.
 
 .. contents:: :local:
    :class: this-will-duplicate-information-and-it-is-still-useful-here
 
 .. [[[cog
-    from sqlite_utils import cli
+    from duckdb_utils import cli
     import sys
     sys._called_from_test = True
     from click.testing import CliRunner
@@ -84,7 +84,7 @@ This page lists the ``--help`` for every ``sqlite-utils`` CLI sub-command.
             )
         cog.out("::\n\n")
         result = CliRunner().invoke(cli.cli, [command, "--help"])
-        output = result.output.replace("Usage: cli ", "Usage: sqlite-utils ")
+        output = result.output.replace("Usage: cli ", "Usage: duckdb-utils ")
         cog.out(textwrap.indent(output, '    '))
         cog.out("\n\n")
 .. ]]]
@@ -98,14 +98,14 @@ See :ref:`cli_query`.
 
 ::
 
-    Usage: sqlite-utils query [OPTIONS] PATH SQL
+    Usage: duckdb-utils query [OPTIONS] PATH SQL
 
       Execute SQL query and return the results as JSON
 
       Example:
 
-          sqlite-utils data.db \
-              "select * from chickens where age > :age" \
+          duckdb-utils data.duckdb \
+              "select * from seagulls where age > :age" \
               -p age 1
 
     Options:
@@ -133,7 +133,7 @@ See :ref:`cli_query`.
       -p, --param <TEXT TEXT>...  Named :parameters for SQL query
       --functions TEXT            Python code defining one or more custom SQL
                                   functions
-      --load-extension TEXT       Path to SQLite extension, with optional
+      --load-extension TEXT       Path to DuckDB extension, with optional
                                   :entrypoint
       -h, --help                  Show this message and exit.
 
@@ -147,31 +147,31 @@ See :ref:`cli_memory`.
 
 ::
 
-    Usage: sqlite-utils memory [OPTIONS] [PATHS]... SQL
+    Usage: duckdb-utils memory [OPTIONS] [PATHS]... SQL
 
       Execute SQL query against an in-memory database, optionally populated by
       imported data
 
       To import data from CSV, TSV or JSON files pass them on the command-line:
 
-          sqlite-utils memory one.csv two.json \
+          duckdb-utils memory one.csv two.json \
               "select * from one join two on one.two_id = two.id"
 
       For data piped into the tool from standard input, use "-" or "stdin":
 
-          cat animals.csv | sqlite-utils memory - \
+          cat animals.csv | duckdb-utils memory - \
               "select * from stdin where species = 'dog'"
 
       The format of the data will be automatically detected. You can specify the
       format explicitly using :json, :csv, :tsv or :nl (for newline-delimited JSON)
       - for example:
 
-          cat animals.csv | sqlite-utils memory stdin:csv places.dat:nl \
+          cat animals.csv | duckdb-utils memory stdin:csv places.dat:nl \
               "select * from stdin where place_id in (select id from places)"
 
       Use --schema to view the SQL schema of any imported files:
 
-          sqlite-utils memory animals.csv --schema
+          duckdb-utils memory animals.csv --schema
 
     Options:
       --functions TEXT            Python code defining one or more custom SQL
@@ -207,7 +207,7 @@ See :ref:`cli_memory`.
       --dump                      Dump SQL for in-memory database
       --save FILE                 Save in-memory database to this file
       --analyze                   Analyze resulting tables and output results
-      --load-extension TEXT       Path to SQLite extension, with optional
+      --load-extension TEXT       Path to DuckDB extension, with optional
                                   :entrypoint
       -h, --help                  Show this message and exit.
 
@@ -221,14 +221,14 @@ See :ref:`cli_inserting_data`, :ref:`cli_insert_csv_tsv`, :ref:`cli_insert_unstr
 
 ::
 
-    Usage: sqlite-utils insert [OPTIONS] PATH TABLE FILE
+    Usage: duckdb-utils insert [OPTIONS] PATH TABLE FILE
 
       Insert records from FILE into a table, creating the table if it does not
       already exist.
 
       Example:
 
-          echo '{"name": "Lila"}' | sqlite-utils insert data.db chickens -
+          echo '{"name": "Lila"}' | duckdb-utils insert data.duckdb seagulls -
 
       By default the input is expected to be a JSON object or array of objects.
 
@@ -247,7 +247,7 @@ See :ref:`cli_inserting_data`, :ref:`cli_insert_csv_tsv`, :ref:`cli_insert_unstr
       file, converting name to upper case and latitude and longitude to floating
       point numbers:
 
-          sqlite-utils insert plants.db plants plants.csv --csv --convert '
+          duckdb-utils insert plants.duckdb plants plants.csv --csv --convert '
             return {
               "name": row["name"].upper(),
               "latitude": float(row["latitude"]),
@@ -260,7 +260,7 @@ See :ref:`cli_inserting_data`, :ref:`cli_insert_csv_tsv`, :ref:`cli_insert_unstr
       When using --text your function can return an iterator of rows to insert. This
       example inserts one record per word in the input:
 
-          echo 'A bunch of words' | sqlite-utils insert words.db words - \
+          echo 'A bunch of words' | duckdb-utils insert words.duckdb words - \
             --text --convert '({"word": w} for w in text.split())'
 
     Options:
@@ -287,7 +287,7 @@ See :ref:`cli_inserting_data`, :ref:`cli_insert_csv_tsv`, :ref:`cli_insert_unstr
       --default <TEXT TEXT>...  Default value that should be set for a column
       -d, --detect-types        Detect types for columns in CSV/TSV data
       --analyze                 Run ANALYZE at the end of this operation
-      --load-extension TEXT     Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT     Path to DuckDB extension, with optional :entrypoint
       --silent                  Do not show progress bar
       --strict                  Apply STRICT mode to created table
       --ignore                  Ignore records if pk already exists
@@ -306,7 +306,7 @@ See :ref:`cli_upsert`.
 
 ::
 
-    Usage: sqlite-utils upsert [OPTIONS] PATH TABLE FILE
+    Usage: duckdb-utils upsert [OPTIONS] PATH TABLE FILE
 
       Upsert records based on their primary key. Works like 'insert' but if an
       incoming record has a primary key that matches an existing record the existing
@@ -317,7 +317,7 @@ See :ref:`cli_upsert`.
           echo '[
               {"id": 1, "name": "Lila"},
               {"id": 2, "name": "Suna"}
-          ]' | sqlite-utils upsert data.db chickens - --pk id
+          ]' | duckdb-utils upsert data.duckdb seagulls - --pk id
 
     Options:
       --pk TEXT                 Columns to use as the primary key, e.g. id
@@ -344,7 +344,7 @@ See :ref:`cli_upsert`.
       --default <TEXT TEXT>...  Default value that should be set for a column
       -d, --detect-types        Detect types for columns in CSV/TSV data
       --analyze                 Run ANALYZE at the end of this operation
-      --load-extension TEXT     Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT     Path to DuckDB extension, with optional :entrypoint
       --silent                  Do not show progress bar
       --strict                  Apply STRICT mode to created table
       -h, --help                Show this message and exit.
@@ -359,7 +359,7 @@ See :ref:`cli_bulk`.
 
 ::
 
-    Usage: sqlite-utils bulk [OPTIONS] PATH SQL FILE
+    Usage: duckdb-utils bulk [OPTIONS] PATH SQL FILE
 
       Execute parameterized SQL against the provided list of documents.
 
@@ -368,8 +368,8 @@ See :ref:`cli_bulk`.
           echo '[
               {"id": 1, "name": "Lila2"},
               {"id": 2, "name": "Suna2"}
-          ]' | sqlite-utils bulk data.db '
-              update chickens set name = :name where id = :id
+          ]' | duckdb-utils bulk data.duckdb '
+              update seagulls set name = :name where id = :id
           ' -
 
     Options:
@@ -390,7 +390,7 @@ See :ref:`cli_bulk`.
       --sniff                Detect delimiter and quote character
       --no-headers           CSV file has no header row
       --encoding TEXT        Character encoding for input, defaults to utf-8
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -403,13 +403,13 @@ See :ref:`cli_search`.
 
 ::
 
-    Usage: sqlite-utils search [OPTIONS] PATH DBTABLE Q
+    Usage: duckdb-utils search [OPTIONS] PATH DBTABLE Q
 
       Execute a full-text search against this table
 
       Example:
 
-          sqlite-utils search data.db chickens lila
+          duckdb-utils search data.duckdb seagulls lila
 
     Options:
       -o, --order TEXT       Order by ('column' or 'column desc')
@@ -433,7 +433,7 @@ See :ref:`cli_search`.
                              simple_outline, textile, tsv, unsafehtml, youtrack
       --json-cols            Detect JSON cols and output them as JSON, not escaped
                              strings
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -446,13 +446,13 @@ See :ref:`cli_transform_table`.
 
 ::
 
-    Usage: sqlite-utils transform [OPTIONS] PATH TABLE
+    Usage: duckdb-utils transform [OPTIONS] PATH TABLE
 
       Transform a table beyond the capabilities of ALTER TABLE
 
       Example:
 
-          sqlite-utils transform mydb.db mytable \
+          duckdb-utils transform mydb.duckdb mytable \
               --drop column1 \
               --rename column2 column_renamed
 
@@ -473,7 +473,7 @@ See :ref:`cli_transform_table`.
                                       another table with another column
       --drop-foreign-key TEXT         Drop foreign key constraint for this column
       --sql                           Output SQL without executing it
-      --load-extension TEXT           Path to SQLite extension, with optional
+      --load-extension TEXT           Path to DuckDB extension, with optional
                                       :entrypoint
       -h, --help                      Show this message and exit.
 
@@ -487,19 +487,19 @@ See :ref:`cli_extract`.
 
 ::
 
-    Usage: sqlite-utils extract [OPTIONS] PATH TABLE COLUMNS...
+    Usage: duckdb-utils extract [OPTIONS] PATH TABLE COLUMNS...
 
       Extract one or more columns into a separate table
 
       Example:
 
-          sqlite-utils extract trees.db Street_Trees species
+          duckdb-utils extract trees.duckdb Street_Trees species
 
     Options:
       --table TEXT             Name of the other table to extract columns to
       --fk-column TEXT         Name of the foreign key column to add to the table
       --rename <TEXT TEXT>...  Rename this column in extracted table
-      --load-extension TEXT    Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT    Path to DuckDB extension, with optional :entrypoint
       -h, --help               Show this message and exit.
 
 
@@ -512,16 +512,16 @@ See :ref:`cli_schema`.
 
 ::
 
-    Usage: sqlite-utils schema [OPTIONS] PATH [TABLES]...
+    Usage: duckdb-utils schema [OPTIONS] PATH [TABLES]...
 
       Show full schema for this database or for specified tables
 
       Example:
 
-          sqlite-utils schema trees.db
+          duckdb-utils schema trees.duckdb
 
     Options:
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -534,13 +534,13 @@ See :ref:`cli_insert_files`.
 
 ::
 
-    Usage: sqlite-utils insert-files [OPTIONS] PATH TABLE FILE_OR_DIR...
+    Usage: duckdb-utils insert-files [OPTIONS] PATH TABLE FILE_OR_DIR...
 
       Insert one or more files using BLOB columns in the specified table
 
       Example:
 
-          sqlite-utils insert-files pics.db images *.gif \
+          duckdb-utils insert-files pics.duckdb images *.gif \
               -c name:name \
               -c content:content \
               -c content_hash:sha256 \
@@ -559,7 +559,7 @@ See :ref:`cli_insert_files`.
       --text                 Store file content as TEXT, not BLOB
       --encoding TEXT        Character encoding for input, defaults to utf-8
       -s, --silent           Don't show a progress bar
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -572,13 +572,13 @@ See :ref:`cli_analyze_tables`.
 
 ::
 
-    Usage: sqlite-utils analyze-tables [OPTIONS] PATH [TABLES]...
+    Usage: duckdb-utils analyze-tables [OPTIONS] PATH [TABLES]...
 
       Analyze the columns in one or more tables
 
       Example:
 
-          sqlite-utils analyze-tables data.db trees
+          duckdb-utils analyze-tables data.duckdb trees
 
     Options:
       -c, --column TEXT       Specific columns to analyze
@@ -586,7 +586,7 @@ See :ref:`cli_analyze_tables`.
       --common-limit INTEGER  How many common values
       --no-most               Skip most common values
       --no-least              Skip least common values
-      --load-extension TEXT   Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT   Path to DuckDB extension, with optional :entrypoint
       -h, --help              Show this message and exit.
 
 
@@ -599,11 +599,11 @@ See :ref:`cli_convert`.
 
 ::
 
-    Usage: sqlite-utils convert [OPTIONS] DB_PATH TABLE COLUMNS... CODE
+    Usage: duckdb-utils convert [OPTIONS] DB_PATH TABLE COLUMNS... CODE
 
       Convert columns using Python code you supply. For example:
 
-          sqlite-utils convert my.db mytable mycolumn \
+          duckdb-utils convert my.duckdb mytable mycolumn \
               '"\n".join(textwrap.wrap(value, 10))' \
               --import=textwrap
 
@@ -637,7 +637,7 @@ See :ref:`cli_convert`.
 
       You can use these recipes like so:
 
-          sqlite-utils convert my.db mytable mycolumn \
+          duckdb-utils convert my.duckdb mytable mycolumn \
               'r.jsonsplit(value, delimiter=":")'
 
     Options:
@@ -668,13 +668,13 @@ See :ref:`cli_tables`.
 
 ::
 
-    Usage: sqlite-utils tables [OPTIONS] PATH
+    Usage: duckdb-utils tables [OPTIONS] PATH
 
       List the tables in the database
 
       Example:
 
-          sqlite-utils tables trees.db
+          duckdb-utils tables trees.duckdb
 
     Options:
       --fts4                 Just show FTS4 enabled tables
@@ -698,7 +698,7 @@ See :ref:`cli_tables`.
                              strings
       --columns              Include list of columns for each table
       --schema               Include schema for each table
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -711,13 +711,13 @@ See :ref:`cli_views`.
 
 ::
 
-    Usage: sqlite-utils views [OPTIONS] PATH
+    Usage: duckdb-utils views [OPTIONS] PATH
 
       List the views in the database
 
       Example:
 
-          sqlite-utils views trees.db
+          duckdb-utils views trees.duckdb
 
     Options:
       --counts               Include row counts per view
@@ -739,7 +739,7 @@ See :ref:`cli_views`.
                              strings
       --columns              Include list of columns for each view
       --schema               Include schema for each view
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -752,13 +752,13 @@ See :ref:`cli_rows`.
 
 ::
 
-    Usage: sqlite-utils rows [OPTIONS] PATH DBTABLE
+    Usage: duckdb-utils rows [OPTIONS] PATH DBTABLE
 
       Output all rows in the specified table
 
       Example:
 
-          sqlite-utils rows trees.db Trees
+          duckdb-utils rows trees.duckdb Trees
 
     Options:
       -c, --column TEXT           Columns to return
@@ -784,7 +784,7 @@ See :ref:`cli_rows`.
                                   unsafehtml, youtrack
       --json-cols                 Detect JSON cols and output them as JSON, not
                                   escaped strings
-      --load-extension TEXT       Path to SQLite extension, with optional
+      --load-extension TEXT       Path to DuckDB extension, with optional
                                   :entrypoint
       -h, --help                  Show this message and exit.
 
@@ -798,13 +798,13 @@ See :ref:`cli_triggers`.
 
 ::
 
-    Usage: sqlite-utils triggers [OPTIONS] PATH [TABLES]...
+    Usage: duckdb-utils triggers [OPTIONS] PATH [TABLES]...
 
       Show triggers configured in this database
 
       Example:
 
-          sqlite-utils triggers trees.db
+          duckdb-utils triggers trees.duckdb
 
     Options:
       --nl                   Output newline-delimited JSON
@@ -823,7 +823,7 @@ See :ref:`cli_triggers`.
                              simple_outline, textile, tsv, unsafehtml, youtrack
       --json-cols            Detect JSON cols and output them as JSON, not escaped
                              strings
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -836,13 +836,13 @@ See :ref:`cli_indexes`.
 
 ::
 
-    Usage: sqlite-utils indexes [OPTIONS] PATH [TABLES]...
+    Usage: duckdb-utils indexes [OPTIONS] PATH [TABLES]...
 
       Show indexes for the whole database or specific tables
 
       Example:
 
-          sqlite-utils indexes trees.db Trees
+          duckdb-utils indexes trees.duckdb Trees
 
     Options:
       --aux                  Include auxiliary columns
@@ -862,7 +862,7 @@ See :ref:`cli_indexes`.
                              simple_outline, textile, tsv, unsafehtml, youtrack
       --json-cols            Detect JSON cols and output them as JSON, not escaped
                              strings
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -875,18 +875,18 @@ See :ref:`cli_create_database`.
 
 ::
 
-    Usage: sqlite-utils create-database [OPTIONS] PATH
+    Usage: duckdb-utils create-database [OPTIONS] PATH
 
       Create a new empty database file
 
       Example:
 
-          sqlite-utils create-database trees.db
+          duckdb-utils create-database trees.duckdb
 
     Options:
       --enable-wal           Enable WAL mode on the created database
       --init-spatialite      Enable SpatiaLite on the created database
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -899,12 +899,12 @@ See :ref:`cli_create_table`.
 
 ::
 
-    Usage: sqlite-utils create-table [OPTIONS] PATH TABLE COLUMNS...
+    Usage: duckdb-utils create-table [OPTIONS] PATH TABLE COLUMNS...
 
       Add a table with the specified columns. Columns should be specified using
       name, type pairs, for example:
 
-          sqlite-utils create-table my.db people \
+          duckdb-utils create-table my.duckdb people \
               id integer \
               name text \
               height float \
@@ -921,7 +921,7 @@ See :ref:`cli_create_table`.
       --ignore                  If table already exists, do nothing
       --replace                 If table already exists, replace it
       --transform               If table already exists, try to transform the schema
-      --load-extension TEXT     Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT     Path to DuckDB extension, with optional :entrypoint
       --strict                  Apply STRICT mode to created table
       -h, --help                Show this message and exit.
 
@@ -935,24 +935,24 @@ See :ref:`cli_create_index`.
 
 ::
 
-    Usage: sqlite-utils create-index [OPTIONS] PATH TABLE COLUMN...
+    Usage: duckdb-utils create-index [OPTIONS] PATH TABLE COLUMN...
 
       Add an index to the specified table for the specified columns
 
       Example:
 
-          sqlite-utils create-index chickens.db chickens name
+          duckdb-utils create-index seagulls.duckdb seagulls name
 
       To create an index in descending order:
 
-          sqlite-utils create-index chickens.db chickens -- -name
+          duckdb-utils create-index seagulls.duckdb seagulls -- -name
 
     Options:
       --name TEXT                Explicit name for the new index
       --unique                   Make this a unique index
       --if-not-exists, --ignore  Ignore if index already exists
       --analyze                  Run ANALYZE after creating the index
-      --load-extension TEXT      Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT      Path to DuckDB extension, with optional :entrypoint
       -h, --help                 Show this message and exit.
 
 
@@ -965,13 +965,13 @@ See :ref:`cli_fts`.
 
 ::
 
-    Usage: sqlite-utils enable-fts [OPTIONS] PATH TABLE COLUMN...
+    Usage: duckdb-utils enable-fts [OPTIONS] PATH TABLE COLUMN...
 
       Enable full-text search for specific table and columns"
 
       Example:
 
-          sqlite-utils enable-fts chickens.db chickens name
+          duckdb-utils enable-fts seagulls.duckdb seagulls name
 
     Options:
       --fts4                 Use FTS4
@@ -980,7 +980,7 @@ See :ref:`cli_fts`.
       --create-triggers      Create triggers to update the FTS tables when the
                              parent table changes.
       --replace              Replace existing FTS configuration if it exists
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -991,16 +991,16 @@ populate-fts
 
 ::
 
-    Usage: sqlite-utils populate-fts [OPTIONS] PATH TABLE COLUMN...
+    Usage: duckdb-utils populate-fts [OPTIONS] PATH TABLE COLUMN...
 
       Re-populate full-text search for specific table and columns
 
       Example:
 
-          sqlite-utils populate-fts chickens.db chickens name
+          duckdb-utils populate-fts seagulls.duckdb seagulls name
 
     Options:
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1011,16 +1011,16 @@ rebuild-fts
 
 ::
 
-    Usage: sqlite-utils rebuild-fts [OPTIONS] PATH [TABLES]...
+    Usage: duckdb-utils rebuild-fts [OPTIONS] PATH [TABLES]...
 
       Rebuild all or specific full-text search tables
 
       Example:
 
-          sqlite-utils rebuild-fts chickens.db chickens
+          duckdb-utils rebuild-fts seagulls.duckdb seagulls
 
     Options:
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1031,16 +1031,16 @@ disable-fts
 
 ::
 
-    Usage: sqlite-utils disable-fts [OPTIONS] PATH TABLE
+    Usage: duckdb-utils disable-fts [OPTIONS] PATH TABLE
 
       Disable full-text search for specific table
 
       Example:
 
-          sqlite-utils disable-fts chickens.db chickens
+          duckdb-utils disable-fts seagulls.duckdb seagulls
 
     Options:
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1053,7 +1053,7 @@ See :ref:`cli_tui`.
 
 ::
 
-    Usage: sqlite-utils tui [OPTIONS]
+    Usage: duckdb-utils tui [OPTIONS]
 
       Open Textual TUI.
 
@@ -1070,18 +1070,18 @@ See :ref:`cli_optimize`.
 
 ::
 
-    Usage: sqlite-utils optimize [OPTIONS] PATH [TABLES]...
+    Usage: duckdb-utils optimize [OPTIONS] PATH [TABLES]...
 
       Optimize all full-text search tables and then run VACUUM - should shrink the
       database file
 
       Example:
 
-          sqlite-utils optimize chickens.db
+          duckdb-utils optimize seagulls.duckdb
 
     Options:
       --no-vacuum            Don't run VACUUM
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1094,14 +1094,14 @@ See :ref:`cli_analyze`.
 
 ::
 
-    Usage: sqlite-utils analyze [OPTIONS] PATH [NAMES]...
+    Usage: duckdb-utils analyze [OPTIONS] PATH [NAMES]...
 
       Run ANALYZE against the whole database, or against specific named indexes and
       tables
 
       Example:
 
-          sqlite-utils analyze chickens.db
+          duckdb-utils analyze seagulls.duckdb
 
     Options:
       -h, --help  Show this message and exit.
@@ -1116,13 +1116,13 @@ See :ref:`cli_vacuum`.
 
 ::
 
-    Usage: sqlite-utils vacuum [OPTIONS] PATH
+    Usage: duckdb-utils vacuum [OPTIONS] PATH
 
       Run VACUUM against the database
 
       Example:
 
-          sqlite-utils vacuum chickens.db
+          duckdb-utils vacuum seagulls.duckdb
 
     Options:
       -h, --help  Show this message and exit.
@@ -1137,16 +1137,16 @@ See :ref:`cli_dump`.
 
 ::
 
-    Usage: sqlite-utils dump [OPTIONS] PATH
+    Usage: duckdb-utils dump [OPTIONS] PATH
 
       Output a SQL dump of the schema and full contents of the database
 
       Example:
 
-          sqlite-utils dump chickens.db
+          duckdb-utils dump seagulls.duckdb
 
     Options:
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1159,14 +1159,14 @@ See :ref:`cli_add_column`.
 
 ::
 
-    Usage: sqlite-utils add-column [OPTIONS] PATH TABLE COL_NAME
+    Usage: duckdb-utils add-column [OPTIONS] PATH TABLE COL_NAME
                           [[integer|int|float|text|str|blob|bytes]]
 
       Add a column to the specified table
 
       Example:
 
-          sqlite-utils add-column chickens.db chickens weight float
+          duckdb-utils add-column seagulls.duckdb seagulls weight float
 
     Options:
       --fk TEXT                Table to reference as a foreign key
@@ -1174,7 +1174,7 @@ See :ref:`cli_add_column`.
                                omitted will automatically use the primary key
       --not-null-default TEXT  Add NOT NULL DEFAULT 'TEXT' constraint
       --ignore                 If column already exists, do nothing
-      --load-extension TEXT    Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT    Path to DuckDB extension, with optional :entrypoint
       -h, --help               Show this message and exit.
 
 
@@ -1187,18 +1187,18 @@ See :ref:`cli_add_foreign_key`.
 
 ::
 
-    Usage: sqlite-utils add-foreign-key [OPTIONS] PATH TABLE COLUMN [OTHER_TABLE]
+    Usage: duckdb-utils add-foreign-key [OPTIONS] PATH TABLE COLUMN [OTHER_TABLE]
                                [OTHER_COLUMN]
 
       Add a new foreign key constraint to an existing table
 
       Example:
 
-          sqlite-utils add-foreign-key my.db books author_id authors id
+          duckdb-utils add-foreign-key my.duckdb books author_id authors id
 
     Options:
       --ignore               If foreign key already exists, do nothing
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1211,18 +1211,18 @@ See :ref:`cli_add_foreign_keys`.
 
 ::
 
-    Usage: sqlite-utils add-foreign-keys [OPTIONS] PATH [FOREIGN_KEY]...
+    Usage: duckdb-utils add-foreign-keys [OPTIONS] PATH [FOREIGN_KEY]...
 
       Add multiple new foreign key constraints to a database
 
       Example:
 
-          sqlite-utils add-foreign-keys my.db \
+          duckdb-utils add-foreign-keys my.duckdb \
               books author_id authors id \
               authors country_id countries id
 
     Options:
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1235,16 +1235,16 @@ See :ref:`cli_index_foreign_keys`.
 
 ::
 
-    Usage: sqlite-utils index-foreign-keys [OPTIONS] PATH
+    Usage: duckdb-utils index-foreign-keys [OPTIONS] PATH
 
       Ensure every foreign key column has an index on it
 
       Example:
 
-          sqlite-utils index-foreign-keys chickens.db
+          duckdb-utils index-foreign-keys seagulls.duckdb
 
     Options:
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1257,16 +1257,16 @@ See :ref:`cli_wal`.
 
 ::
 
-    Usage: sqlite-utils enable-wal [OPTIONS] PATH...
+    Usage: duckdb-utils enable-wal [OPTIONS] PATH...
 
       Enable WAL for database files
 
       Example:
 
-          sqlite-utils enable-wal chickens.db
+          duckdb-utils enable-wal seagulls.duckdb
 
     Options:
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1277,16 +1277,16 @@ disable-wal
 
 ::
 
-    Usage: sqlite-utils disable-wal [OPTIONS] PATH...
+    Usage: duckdb-utils disable-wal [OPTIONS] PATH...
 
       Disable WAL for database files
 
       Example:
 
-          sqlite-utils disable-wal chickens.db
+          duckdb-utils disable-wal seagulls.duckdb
 
     Options:
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1299,16 +1299,16 @@ See :ref:`cli_enable_counts`.
 
 ::
 
-    Usage: sqlite-utils enable-counts [OPTIONS] PATH [TABLES]...
+    Usage: duckdb-utils enable-counts [OPTIONS] PATH [TABLES]...
 
       Configure triggers to update a _counts table with row counts
 
       Example:
 
-          sqlite-utils enable-counts chickens.db
+          duckdb-utils enable-counts seagulls.duckdb
 
     Options:
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1319,16 +1319,16 @@ reset-counts
 
 ::
 
-    Usage: sqlite-utils reset-counts [OPTIONS] PATH
+    Usage: duckdb-utils reset-counts [OPTIONS] PATH
 
       Reset calculated counts in the _counts table
 
       Example:
 
-          sqlite-utils reset-counts chickens.db
+          duckdb-utils reset-counts seagulls.duckdb
 
     Options:
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1341,13 +1341,13 @@ See :ref:`cli_duplicate_table`.
 
 ::
 
-    Usage: sqlite-utils duplicate [OPTIONS] PATH TABLE NEW_TABLE
+    Usage: duckdb-utils duplicate [OPTIONS] PATH TABLE NEW_TABLE
 
       Create a duplicate of this table, copying across the schema and all row data.
 
     Options:
       --ignore               If table does not exist, do nothing
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1360,13 +1360,13 @@ See :ref:`cli_renaming_tables`.
 
 ::
 
-    Usage: sqlite-utils rename-table [OPTIONS] PATH TABLE NEW_NAME
+    Usage: duckdb-utils rename-table [OPTIONS] PATH TABLE NEW_NAME
 
       Rename this table.
 
     Options:
       --ignore               If table does not exist, do nothing
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1379,17 +1379,17 @@ See :ref:`cli_drop_table`.
 
 ::
 
-    Usage: sqlite-utils drop-table [OPTIONS] PATH TABLE
+    Usage: duckdb-utils drop-table [OPTIONS] PATH TABLE
 
       Drop the specified table
 
       Example:
 
-          sqlite-utils drop-table chickens.db chickens
+          duckdb-utils drop-table seagulls.duckdb seagulls
 
     Options:
       --ignore               If table does not exist, do nothing
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1402,19 +1402,19 @@ See :ref:`cli_create_view`.
 
 ::
 
-    Usage: sqlite-utils create-view [OPTIONS] PATH VIEW SELECT
+    Usage: duckdb-utils create-view [OPTIONS] PATH VIEW SELECT
 
       Create a view for the provided SELECT query
 
       Example:
 
-          sqlite-utils create-view chickens.db heavy_chickens \
-            'select * from chickens where weight > 3'
+          duckdb-utils create-view seagulls.duckdb heavy_seagulls \
+            'select * from seagulls where weight > 3'
 
     Options:
       --ignore               If view already exists, do nothing
       --replace              If view already exists, replace it
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1427,17 +1427,17 @@ See :ref:`cli_drop_view`.
 
 ::
 
-    Usage: sqlite-utils drop-view [OPTIONS] PATH VIEW
+    Usage: duckdb-utils drop-view [OPTIONS] PATH VIEW
 
       Drop the specified view
 
       Example:
 
-          sqlite-utils drop-view chickens.db heavy_chickens
+          duckdb-utils drop-view seagulls.duckdb heavy_seagulls
 
     Options:
       --ignore               If view does not exist, do nothing
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1450,9 +1450,9 @@ See :ref:`cli_install`.
 
 ::
 
-    Usage: sqlite-utils install [OPTIONS] [PACKAGES]...
+    Usage: duckdb-utils install [OPTIONS] [PACKAGES]...
 
-      Install packages from PyPI into the same environment as sqlite-utils
+      Install packages from PyPI into the same environment as duckdb-utils
 
     Options:
       -U, --upgrade        Upgrade packages to latest version
@@ -1469,9 +1469,9 @@ See :ref:`cli_uninstall`.
 
 ::
 
-    Usage: sqlite-utils uninstall [OPTIONS] PACKAGES...
+    Usage: duckdb-utils uninstall [OPTIONS] PACKAGES...
 
-      Uninstall Python packages from the sqlite-utils environment
+      Uninstall Python packages from the duckdb-utils environment
 
     Options:
       -y, --yes   Don't ask for confirmation
@@ -1487,7 +1487,7 @@ See :ref:`cli_spatialite`.
 
 ::
 
-    Usage: sqlite-utils add-geometry-column [OPTIONS] DB_PATH TABLE COLUMN_NAME
+    Usage: duckdb-utils add-geometry-column [OPTIONS] DB_PATH TABLE COLUMN_NAME
 
       Add a SpatiaLite geometry column to an existing table. Requires SpatiaLite
       extension.
@@ -1505,7 +1505,7 @@ See :ref:`cli_spatialite`.
       --dimensions TEXT               Coordinate dimensions. Use XYZ for three-
                                       dimensional geometries.
       --not-null                      Add a NOT NULL constraint.
-      --load-extension TEXT           Path to SQLite extension, with optional
+      --load-extension TEXT           Path to DuckDB extension, with optional
                                       :entrypoint
       -h, --help                      Show this message and exit.
 
@@ -1519,7 +1519,7 @@ See :ref:`cli_spatialite_indexes`.
 
 ::
 
-    Usage: sqlite-utils create-spatial-index [OPTIONS] DB_PATH TABLE COLUMN_NAME
+    Usage: duckdb-utils create-spatial-index [OPTIONS] DB_PATH TABLE COLUMN_NAME
 
       Create a spatial index on a SpatiaLite geometry column. The table and geometry
       column must already exist before trying to add a spatial index.
@@ -1528,7 +1528,7 @@ See :ref:`cli_spatialite_indexes`.
       paths. To load it from a specific path, use --load-extension.
 
     Options:
-      --load-extension TEXT  Path to SQLite extension, with optional :entrypoint
+      --load-extension TEXT  Path to DuckDB extension, with optional :entrypoint
       -h, --help             Show this message and exit.
 
 
@@ -1539,7 +1539,7 @@ plugins
 
 ::
 
-    Usage: sqlite-utils plugins [OPTIONS]
+    Usage: duckdb-utils plugins [OPTIONS]
 
       List installed plugins
 

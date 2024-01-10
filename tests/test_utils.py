@@ -1,4 +1,4 @@
-from sqlite_utils import utils
+from duckdb_utils import utils
 import csv
 import io
 import pytest
@@ -41,15 +41,15 @@ def test_chunks(size, expected):
 
 def test_hash_record():
     expected = "d383e7c0ba88f5ffcdd09be660de164b3847401a"
-    assert utils.hash_record({"name": "Cleo", "twitter": "CleoPaws"}) == expected
+    assert utils.hash_record({"name": "Emme", "twitter": "EmmePaws"}) == expected
     assert (
         utils.hash_record(
-            {"name": "Cleo", "twitter": "CleoPaws", "age": 7}, keys=("name", "twitter")
+            {"name": "Emme", "twitter": "EmmePaws", "age": 7}, keys=("name", "twitter")
         )
         == expected
     )
     assert (
-        utils.hash_record({"name": "Cleo", "twitter": "CleoPaws", "age": 7}) != expected
+        utils.hash_record({"name": "Emme", "twitter": "EmmePaws", "age": 7}) != expected
     )
 
 

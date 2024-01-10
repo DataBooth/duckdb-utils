@@ -24,4 +24,4 @@ jobs:
     - name: Check spelling
       run: |
         codespell docs/*.rst --ignore-words docs/codespell-ignore-words.txt
-        codespell sqlite_utils --ignore-words docs/codespell-ignore-words.txt
+        codespell duckdb_utils --ignore-words docs/codespell-ignore-words.txt

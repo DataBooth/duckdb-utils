@@ -1,4 +1,4 @@
-from sqlite_utils import cli, Database
+from duckdb_utils import cli, Database
 from click.testing import CliRunner
 import os
 import pathlib
@@ -11,7 +11,7 @@ def test_insert_files(silent):
     runner = CliRunner()
     with runner.isolated_filesystem():
         tmpdir = pathlib.Path(".")
-        db_path = str(tmpdir / "files.db")
+        db_path = str(tmpdir / "files.duckdb")
         (tmpdir / "one.txt").write_text("This is file one", "utf-8")
         (tmpdir / "two.txt").write_text("Two is shorter", "utf-8")
         (tmpdir / "nested").mkdir()
@@ -120,7 +120,7 @@ def test_insert_files_stdin(use_text, encoding, input, expected):
     runner = CliRunner()
     with runner.isolated_filesystem():
         tmpdir = pathlib.Path(".")
-        db_path = str(tmpdir / "files.db")
+        db_path = str(tmpdir / "files.duckdb")
         args = ["insert-files", db_path, "files", "-", "--name", "stdin-name"]
         if use_text:
             args += ["--text"]
@@ -151,7 +151,7 @@ def test_insert_files_bad_text_encoding_error():
         tmpdir = pathlib.Path(".")
         latin = tmpdir / "latin.txt"
         latin.write_bytes(b"S\xe3o Paulo")
-        db_path = str(tmpdir / "files.db")
+        db_path = str(tmpdir / "files.duckdb")
         result = runner.invoke(
             cli.cli,
             ["insert-files", db_path, "files", str(latin), "--text"],

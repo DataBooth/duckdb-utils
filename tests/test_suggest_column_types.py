@@ -1,6 +1,6 @@
 import pytest
 from collections import OrderedDict
-from sqlite_utils.utils import suggest_column_types
+from duckdb_utils.utils import suggest_column_types
 
 
 @pytest.mark.parametrize(

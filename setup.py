@@ -14,15 +14,15 @@ def get_long_description():
 
 
 setup(
-    name="sqlite-utils",
-    description="CLI tool and Python library for manipulating SQLite databases",
+    name="duckdb-utils",
+    description="CLI tool and Python library for manipulating DuckDB databases",
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
-    author="Simon Willison",
+    author="Simon Booth",
     version=VERSION,
     license="Apache License, Version 2.0",
     packages=find_packages(exclude=["tests", "tests.*"]),
-    package_data={"sqlite_utils": ["py.typed"]},
+    package_data={"duckdb_utils": ["py.typed"]},
     install_requires=[
         "sqlite-fts4",
         "click",
@@ -54,15 +54,15 @@ setup(
     },
     entry_points="""
         [console_scripts]
-        sqlite-utils=sqlite_utils.cli:cli
+        duckdb-utils=duckdb_utils.cli:cli
     """,
-    url="https://github.com/simonw/sqlite-utils",
+    url="https://github.com/databooth/duckdb-utils",
     project_urls={
-        "Documentation": "https://sqlite-utils.datasette.io/en/stable/",
-        "Changelog": "https://sqlite-utils.datasette.io/en/stable/changelog.html",
-        "Source code": "https://github.com/simonw/sqlite-utils",
-        "Issues": "https://github.com/simonw/sqlite-utils/issues",
-        "CI": "https://github.com/simonw/sqlite-utils/actions",
+        "Documentation": "https://duckdb-utils.databooth.com.au/en/stable/",
+        "Changelog": "https://duckdb-utils.databooth.com.au/en/stable/changelog.html",
+        "Source code": "https://github.com/databooth/duckdb-utils",
+        "Issues": "https://github.com/databooth/duckdb-utils/issues",
+        "CI": "https://github.com/databooth/duckdb-utils/actions",
     },
     python_requires=">=3.7",
     classifiers=[

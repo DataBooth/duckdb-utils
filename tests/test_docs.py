@@ -1,11 +1,11 @@
 from click.testing import CliRunner
-from sqlite_utils import cli, recipes
+from duckdb_utils import cli, recipes
 from pathlib import Path
 import pytest
 import re
 
 docs_path = Path(__file__).parent.parent / "docs"
-commands_re = re.compile(r"(?:\$ |    )sqlite-utils (\S+)")
+commands_re = re.compile(r"(?:\$ |    )duckdb-utils (\S+)")
 recipes_re = re.compile(r"r\.(\w+)\(")
 
 

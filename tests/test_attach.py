@@ -1,9 +1,9 @@
-from sqlite_utils import Database
+from duckdb_utils import Database
 
 
 def test_attach(tmpdir):
-    foo_path = str(tmpdir / "foo.db")
-    bar_path = str(tmpdir / "bar.db")
+    foo_path = str(tmpdir / "foo.duckdb")
+    bar_path = str(tmpdir / "bar.duckdb")
     db = Database(foo_path)
     with db.conn:
         db["foo"].insert({"id": 1, "text": "foo"})

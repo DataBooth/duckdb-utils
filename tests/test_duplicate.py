@@ -1,4 +1,4 @@
-from sqlite_utils.db import NoTable
+from duckdb_utils.duckdb import NoTable
 import datetime
 import pytest
 
@@ -16,7 +16,7 @@ def test_duplicate(fresh_db):
     # Insert one row of mock data:
     dt = datetime.datetime.now()
     data = {
-        "text_col": "Cleo",
+        "text_col": "Emme",
         "real_col": 3.14,
         "int_col": -255,
         "bool_col": True,

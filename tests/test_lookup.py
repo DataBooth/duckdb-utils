@@ -1,4 +1,4 @@
-from sqlite_utils.db import Index
+from duckdb_utils.duckdb import Index
 import pytest
 
 

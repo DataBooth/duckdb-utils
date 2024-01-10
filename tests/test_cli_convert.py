@@ -1,6 +1,6 @@
 from click.testing import CliRunner
-from sqlite_utils import cli
-import sqlite_utils
+from duckdb_utils import cli
+import duckdb_utils
 import json
 import textwrap
 import pathlib
@@ -24,8 +24,8 @@ def test_db_and_path(fresh_db_and_path):
 
 @pytest.fixture
 def fresh_db_and_path(tmpdir):
-    db_path = str(pathlib.Path(tmpdir) / "data.db")
-    db = sqlite_utils.Database(db_path)
+    db_path = str(pathlib.Path(tmpdir) / "data.duckdb")
+    db = duckdb_utils.Database(db_path)
     return db, db_path
 
 
@@ -96,7 +96,7 @@ def test_convert_import(test_db_and_path):
 
 def test_convert_import_nested(fresh_db_and_path):
     db, db_path = fresh_db_and_path
-    db["example"].insert({"xml": '<item name="Cleo" />'})
+    db["example"].insert({"xml": '<item name="Emme" />'})
     result = CliRunner().invoke(
         cli.cli,
         [
@@ -111,7 +111,7 @@ def test_convert_import_nested(fresh_db_and_path):
     )
     assert result.exit_code == 0, result.output
     assert [
-        {"xml": "Cleo"},
+        {"xml": "Emme"},
     ] == list(db["example"].rows)
 
 
@@ -334,7 +334,7 @@ def test_convert_multi(fresh_db_and_path, drop):
     db["creatures"].insert_all(
         [
             {"id": 1, "name": "Simon"},
-            {"id": 2, "name": "Cleo"},
+            {"id": 2, "name": "Emme"},
         ],
         pk="id",
     )
@@ -351,8 +351,8 @@ def test_convert_multi(fresh_db_and_path, drop):
     result = CliRunner().invoke(cli.cli, args)
     assert result.exit_code == 0, result.output
     expected = [
-        {"id": 1, "name": "Simon", "upper": "SIMON", "lower": "simon"},
-        {"id": 2, "name": "Cleo", "upper": "CLEO", "lower": "cleo"},
+        {"id": 1, "name": "Simon", "upper": "SIMON", "lower": "michael"},
+        {"id": 2, "name": "Emme", "upper": "CLEO", "lower": "emme"},
     ]
     if drop:
         for row in expected:
@@ -414,8 +414,8 @@ def test_convert_multi_complex_column_types(fresh_db_and_path):
 
 @pytest.mark.parametrize("delimiter", [None, ";", "-"])
 def test_recipe_jsonsplit(tmpdir, delimiter):
-    db_path = str(pathlib.Path(tmpdir) / "data.db")
-    db = sqlite_utils.Database(db_path)
+    db_path = str(pathlib.Path(tmpdir) / "data.duckdb")
+    db = duckdb_utils.Database(db_path)
     db["example"].insert_all(
         [
             {"id": 1, "tags": (delimiter or ",").join(["foo", "bar"])},
@@ -550,7 +550,7 @@ def test_convert_where(test_db_and_path):
 def test_convert_where_multi(fresh_db_and_path):
     db, db_path = fresh_db_and_path
     db["names"].insert_all(
-        [{"id": 1, "name": "Cleo"}, {"id": 2, "name": "Bants"}], pk="id"
+        [{"id": 1, "name": "Emme"}, {"id": 2, "name": "Bants"}], pk="id"
     )
     result = CliRunner().invoke(
         cli.cli,
@@ -570,14 +570,14 @@ def test_convert_where_multi(fresh_db_and_path):
     )
     assert result.exit_code == 0, result.output
     assert list(db["names"].rows) == [
-        {"id": 1, "name": "Cleo", "upper": None},
+        {"id": 1, "name": "Emme", "upper": None},
         {"id": 2, "name": "Bants", "upper": "BANTS"},
     ]
 
 
 def test_convert_code_standard_input(fresh_db_and_path):
     db, db_path = fresh_db_and_path
-    db["names"].insert_all([{"id": 1, "name": "Cleo"}], pk="id")
+    db["names"].insert_all([{"id": 1, "name": "Emme"}], pk="id")
     result = CliRunner().invoke(
         cli.cli,
         [
@@ -597,7 +597,7 @@ def test_convert_code_standard_input(fresh_db_and_path):
 
 def test_convert_hyphen_workaround(fresh_db_and_path):
     db, db_path = fresh_db_and_path
-    db["names"].insert_all([{"id": 1, "name": "Cleo"}], pk="id")
+    db["names"].insert_all([{"id": 1, "name": "Emme"}], pk="id")
     result = CliRunner().invoke(
         cli.cli,
         ["convert", db_path, "names", "name", '"-"'],
@@ -610,7 +610,7 @@ def test_convert_hyphen_workaround(fresh_db_and_path):
 
 def test_convert_initialization_pattern(fresh_db_and_path):
     db, db_path = fresh_db_and_path
-    db["names"].insert_all([{"id": 1, "name": "Cleo"}], pk="id")
+    db["names"].insert_all([{"id": 1, "name": "Emme"}], pk="id")
     result = CliRunner().invoke(
         cli.cli,
         [

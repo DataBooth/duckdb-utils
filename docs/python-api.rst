@@ -1,7 +1,7 @@
 .. _python_api:
 
 =============================
- sqlite_utils Python library
+ duckdb_utils Python library
 =============================
 
 .. contents:: :local:
@@ -12,86 +12,86 @@
 Getting started
 ===============
 
-Here's how to create a new SQLite database file containing a new ``chickens`` table, populated with four records:
+Here's how to create a new DuckDB database file containing a new ``seagulls`` table, populated with four records:
 
 .. code-block:: python
 
-    from sqlite_utils import Database
+    from duckdb_utils import Database
 
-    db = Database("chickens.db")
-    db["chickens"].insert_all([{
+    db = Database("seagulls.duckdb")
+    db["seagulls"].insert_all([{
         "name": "Azi",
-        "color": "blue",
+        "colour": "blue",
     }, {
         "name": "Lila",
-        "color": "blue",
+        "colour": "blue",
     }, {
         "name": "Suna",
-        "color": "gold",
+        "colour": "gold",
     }, {
         "name": "Cardi",
-        "color": "black",
+        "colour": "black",
     }])
 
 You can loop through those rows like this:
 
 .. code-block:: python
 
-    for row in db["chickens"].rows:
+    for row in db["seagulls"].rows:
         print(row)
 
 Which outputs the following::
 
-    {'name': 'Azi', 'color': 'blue'}
-    {'name': 'Lila', 'color': 'blue'}
-    {'name': 'Suna', 'color': 'gold'}
-    {'name': 'Cardi', 'color': 'black'}
+    {'name': 'Azi', 'colour': 'blue'}
+    {'name': 'Lila', 'colour': 'blue'}
+    {'name': 'Suna', 'colour': 'gold'}
+    {'name': 'Cardi', 'colour': 'black'}
 
 To run a SQL query, use :ref:`db.query() <python_api_query>`:
 
 .. code-block:: python
 
     for row in db.query("""
-        select color, count(*)
-        from chickens group by color
+        select colour, count(*)
+        from seagulls group by colour
         order by count(*) desc
     """):
         print(row)
 
 Which outputs::
 
-    {'color': 'blue', 'count(*)': 2}
-    {'color': 'gold', 'count(*)': 1}
-    {'color': 'black', 'count(*)': 1}
+    {'colour': 'blue', 'count(*)': 2}
+    {'colour': 'gold', 'count(*)': 1}
+    {'colour': 'black', 'count(*)': 1}
 
 .. _python_api_connect:
 
 Connecting to or creating a database
 ====================================
 
-Database objects are constructed by passing in either a path to a file on disk or an existing SQLite3 database connection:
+Database objects are constructed by passing in either a path to a file on disk or an existing DuckDB3 database connection:
 
 .. code-block:: python
 
-    from sqlite_utils import Database
+    from duckdb_utils import Database
 
-    db = Database("my_database.db")
+    db = Database("my_database.duckdb")
 
-This will create ``my_database.db`` if it does not already exist.
+This will create ``my_database.duckdb`` if it does not already exist.
 
 If you want to recreate a database from scratch (first removing the existing file from disk if it already exists) you can use the ``recreate=True`` argument:
 
 .. code-block:: python
 
-    db = Database("my_database.db", recreate=True)
+    db = Database("my_database.duckdb", recreate=True)
 
-Instead of a file path you can pass in an existing SQLite connection:
+Instead of a file path you can pass in an existing DuckDB connection:
 
 .. code-block:: python
 
-    import sqlite3
+    import duckdb
 
-    db = Database(sqlite3.connect("my_database.db"))
+    db = Database(duckdb.connect("my_database.duckdb"))
 
 If you want to create an in-memory database, you can do so like this:
 
@@ -111,31 +111,31 @@ Connections use ``PRAGMA recursive_triggers=on`` by default. If you don't want t
 
     db = Database(memory=True, recursive_triggers=False)
 
-By default, any :ref:`sqlite-utils plugins <plugins>` that implement the :ref:`plugins_hooks_prepare_connection` hook will be executed against the connection when you create the ``Database`` object. You can opt out of executing plugins using ``execute_plugins=False`` like this:
+By default, any :ref:`duckdb-utils plugins <plugins>` that implement the :ref:`plugins_hooks_prepare_connection` hook will be executed against the connection when you create the ``Database`` object. You can opt out of executing plugins using ``execute_plugins=False`` like this:
 
 .. code-block:: python
 
     db = Database(memory=True, execute_plugins=False)
 
-You can pass ``strict=True`` to enable `SQLite STRICT mode <https://www.sqlite.org/stricttables.html>`__ for all tables created using this database object:
+You can pass ``strict=True`` to enable `DuckDB STRICT mode <https://www.sqlite.org/stricttables.html>`__ for all tables created using this database object:
 
 .. code-block:: python
 
-    db = Database("my_database.db", strict=True)
+    db = Database("my_database.duckdb", strict=True)
 
 .. _python_api_attach:
 
 Attaching additional databases
 ------------------------------
 
-SQLite supports cross-database SQL queries, which can join data from tables in more than one database file.
+DuckDB supports cross-database SQL queries, which can join data from tables in more than one database file.
 
-You can attach an additional database using the ``.attach()`` method, providing an alias to use for that database and the path to the SQLite file on disk.
+You can attach an additional database using the ``.attach()`` method, providing an alias to use for that database and the path to the DuckDB file on disk.
 
 .. code-block:: python
 
-    db = Database("first.db")
-    db.attach("second", "second.db")
+    db = Database("first.duckdb")
+    db.attach("second", "second.duckdb")
     # Now you can run queries like this one:
     print(db.query("""
     select * from table_in_first
@@ -150,7 +150,7 @@ You can reference tables in the attached database using the alias value you pass
 Tracing queries
 ---------------
 
-You can use the ``tracer`` mechanism to see SQL queries that are being executed by SQLite. A tracer is a function that you provide which will be called with ``sql`` and ``params`` arguments every time SQL is executed, for example:
+You can use the ``tracer`` mechanism to see SQL queries that are being executed by DuckDB. A tracer is a function that you provide which will be called with ``sql`` and ``params`` arguments every time SQL is executed, for example:
 
 .. code-block:: python
 
@@ -170,7 +170,7 @@ You can also turn on a tracer function temporarily for a block of code using the
     db = Database(memory=True)
     # ... later
     with db.tracer(print):
-        db["dogs"].insert({"name": "Cleo"})
+        db["cats"].insert({"name": "Emme"})
 
 This example will print queries only for the duration of the ``with`` block.
 
@@ -191,11 +191,11 @@ The ``db.query(sql)`` function executes a SQL query and returns an iterator over
 .. code-block:: python
 
     db = Database(memory=True)
-    db["dogs"].insert_all([{"name": "Cleo"}, {"name": "Pancakes"}])
-    for row in db.query("select * from dogs"):
+    db["cats"].insert_all([{"name": "Emme"}, {"name": "Pancakes"}])
+    for row in db.query("select * from cats"):
         print(row)
     # Outputs:
-    # {'name': 'Cleo'}
+    # {'name': 'Emme'}
     # {'name': 'Pancakes'}
 
 .. _python_api_execute:
@@ -203,20 +203,20 @@ The ``db.query(sql)`` function executes a SQL query and returns an iterator over
 db.execute(sql, params)
 -----------------------
 
-The ``db.execute()`` and ``db.executescript()`` methods provide wrappers around ``.execute()`` and ``.executescript()`` on the underlying SQLite connection. These wrappers log to the :ref:`tracer function <python_api_tracing>` if one has been registered.
+The ``db.execute()`` and ``db.executescript()`` methods provide wrappers around ``.execute()`` and ``.executescript()`` on the underlying DuckDB connection. These wrappers log to the :ref:`tracer function <python_api_tracing>` if one has been registered.
 
-``db.execute(sql)`` returns a `sqlite3.Cursor <https://docs.python.org/3/library/sqlite3.html#sqlite3.Cursor>`__ that was used to execute the SQL.
+``db.execute(sql)`` returns a `duckdb.Cursor <https://docs.python.org/3/library/duckdb.html#duckdb.Cursor>`__ that was used to execute the SQL.
 
 .. code-block:: python
 
     db = Database(memory=True)
-    db["dogs"].insert({"name": "Cleo"})
-    cursor = db.execute("update dogs set name = 'Cleopaws'")
+    db["cats"].insert({"name": "Emme"})
+    cursor = db.execute("update cats set name = 'Emmepaws'")
     print(cursor.rowcount)
     # Outputs the number of rows affected by the update
     # In this case 2
 
-Other cursor methods such as ``.fetchone()`` and ``.fetchall()`` are also available, see the `standard library documentation <https://docs.python.org/3/library/sqlite3.html#sqlite3.Cursor>`__.
+Other cursor methods such as ``.fetchone()`` and ``.fetchall()`` are also available, see the `standard library documentation <https://docs.python.org/3/library/duckdb.html#duckdb.Cursor>`__.
 
 .. _python_api_parameters:
 
@@ -231,18 +231,18 @@ This can take the form of either a tuple/list or a dictionary, depending on the 
 
 .. code-block:: python
 
-    db.execute("update dogs set name = ?", ["Cleopaws"])
-    # This will rename ALL dogs to be called "Cleopaws"
+    db.execute("update cats set name = ?", ["Emmepaws"])
+    # This will rename ALL cats to be called "Emmepaws"
 
 Named parameters using ``:name`` can be filled using a dictionary:
 
 .. code-block:: python
 
     dog = next(db.query(
-        "select rowid, name from dogs where name = :name",
-        {"name": "Cleopaws"}
+        "select rowid, name from cats where name = :name",
+        {"name": "Emmepaws"}
     ))
-    # dog is now {'rowid': 1, 'name': 'Cleopaws'}
+    # dog is now {'rowid': 1, 'name': 'Emmepaws'}
 
 In this example ``next()`` is used to retrieve the first result in the iterator returned by the ``db.query()`` method.
 
@@ -275,14 +275,14 @@ Listing tables
 You can list the names of tables in a database using the ``.table_names()`` method::
 
     >>> db.table_names()
-    ['dogs']
+    ['cats']
 
 To see just the FTS4 tables, use ``.table_names(fts4=True)``. For FTS5, use ``.table_names(fts5=True)``.
 
 You can also iterate through the table objects themselves using the ``.tables`` property::
 
     >>> db.tables
-    [<Table dogs>]
+    [<Table cats>]
 
 .. _python_api_views:
 
@@ -292,12 +292,12 @@ Listing views
 ``.view_names()`` shows you a list of views in the database::
 
     >>> db.view_names()
-    ['good_dogs']
+    ['good_cats']
 
 You can iterate through view objects using the ``.views`` property::
 
     >>> db.views
-    [<View good_dogs>]
+    [<View good_cats>]
 
 View objects are similar to Table objects, except that any attempts to insert or update data will throw an error. The full list of methods and properties available on a view object is as follows:
 
@@ -316,53 +316,53 @@ Listing rows
 
 To iterate through dictionaries for each of the rows in a table, use ``.rows``::
 
-    >>> db = sqlite_utils.Database("dogs.db")
-    >>> for row in db["dogs"].rows:
+    >>> db = duckdb_utils.Database("cats.duckdb")
+    >>> for row in db["cats"].rows:
     ...     print(row)
-    {'id': 1, 'age': 4, 'name': 'Cleo'}
+    {'id': 1, 'age': 4, 'name': 'Emme'}
     {'id': 2, 'age': 2, 'name': 'Pancakes'}
 
 You can filter rows by a WHERE clause using ``.rows_where(where, where_args)``::
 
-    >>> db = sqlite_utils.Database("dogs.db")
-    >>> for row in db["dogs"].rows_where("age > ?", [3]):
+    >>> db = duckdb_utils.Database("cats.duckdb")
+    >>> for row in db["cats"].rows_where("age > ?", [3]):
     ...     print(row)
-    {'id': 1, 'age': 4, 'name': 'Cleo'}
+    {'id': 1, 'age': 4, 'name': 'Emme'}
 
 The first argument is a fragment of SQL. The second, optional argument is values to be passed to that fragment - you can use ``?`` placeholders and pass an array, or you can use ``:named`` parameters and pass a dictionary, like this::
 
-    >>> for row in db["dogs"].rows_where("age > :age", {"age": 3}):
+    >>> for row in db["cats"].rows_where("age > :age", {"age": 3}):
     ...     print(row)
-    {'id': 1, 'age': 4, 'name': 'Cleo'}
+    {'id': 1, 'age': 4, 'name': 'Emme'}
 
 To return custom columns (instead of the default that uses ``select *``) pass ``select="column1, column2"``::
 
-    >>> db = sqlite_utils.Database("dogs.db")
-    >>> for row in db["dogs"].rows_where(select='name, age'):
+    >>> db = duckdb_utils.Database("cats.duckdb")
+    >>> for row in db["cats"].rows_where(select='name, age'):
     ...     print(row)
-    {'name': 'Cleo', 'age': 4}
+    {'name': 'Emme', 'age': 4}
 
 To specify an order, use the ``order_by=`` argument::
 
-    >>> for row in db["dogs"].rows_where("age > 1", order_by="age"):
+    >>> for row in db["cats"].rows_where("age > 1", order_by="age"):
     ...     print(row)
     {'id': 2, 'age': 2, 'name': 'Pancakes'}
-    {'id': 1, 'age': 4, 'name': 'Cleo'}
+    {'id': 1, 'age': 4, 'name': 'Emme'}
 
 You can use ``order_by="age desc"`` for descending order.
 
 You can order all records in the table by excluding the ``where`` argument::
 
-    >>> for row in db["dogs"].rows_where(order_by="age desc"):
+    >>> for row in db["cats"].rows_where(order_by="age desc"):
     ...     print(row)
-    {'id': 1, 'age': 4, 'name': 'Cleo'}
+    {'id': 1, 'age': 4, 'name': 'Emme'}
     {'id': 2, 'age': 2, 'name': 'Pancakes'}
 
 This method also accepts ``offset=`` and ``limit=`` arguments, for specifying an OFFSET and a LIMIT for the SQL query::
 
-    >>> for row in db["dogs"].rows_where(order_by="age desc", limit=1):
+    >>> for row in db["cats"].rows_where(order_by="age desc", limit=1):
     ...     print(row)
-    {'id': 1, 'age': 4, 'name': 'Cleo'}
+    {'id': 1, 'age': 4, 'name': 'Emme'}
 
 .. _python_api_rows_count_where:
 
@@ -371,7 +371,7 @@ Counting rows
 
 To count the number of rows that would be returned by a where filter, use ``.count_where(where, where_args)``:
 
-    >>> db["dogs"].count_where("age > ?", [1])
+    >>> db["cats"].count_where("age > ?", [1])
     2
 
 .. _python_api_pks_and_rows_where:
@@ -389,24 +389,24 @@ If the table is a ``rowid`` table (with no explicit primary key column) then tha
 
 ::
 
-    >>> db = sqlite_utils.Database(memory=True)
-    >>> db["dogs"].insert({"name": "Cleo"})
-    >>> for pk, row in db["dogs"].pks_and_rows_where():
+    >>> db = duckdb_utils.Database(memory=True)
+    >>> db["cats"].insert({"name": "Emme"})
+    >>> for pk, row in db["cats"].pks_and_rows_where():
     ...     print(pk, row)
-    1 {'rowid': 1, 'name': 'Cleo'}
+    1 {'rowid': 1, 'name': 'Emme'}
 
-    >>> db["dogs_with_pk"].insert({"id": 5, "name": "Cleo"}, pk="id")
-    >>> for pk, row in db["dogs_with_pk"].pks_and_rows_where():
+    >>> db["cats_with_pk"].insert({"id": 5, "name": "Emme"}, pk="id")
+    >>> for pk, row in db["cats_with_pk"].pks_and_rows_where():
     ...     print(pk, row)
-    5 {'id': 5, 'name': 'Cleo'}
+    5 {'id': 5, 'name': 'Emme'}
 
-    >>> db["dogs_with_compound_pk"].insert(
-    ...     {"species": "dog", "id": 3, "name": "Cleo"},
+    >>> db["cats_with_compound_pk"].insert(
+    ...     {"species": "dog", "id": 3, "name": "Emme"},
     ...     pk=("species", "id")
     ... )
-    >>> for pk, row in db["dogs_with_compound_pk"].pks_and_rows_where():
+    >>> for pk, row in db["cats_with_compound_pk"].pks_and_rows_where():
     ...     print(pk, row)
-    ('dog', 3) {'species': 'dog', 'id': 3, 'name': 'Cleo'}
+    ('dog', 3) {'species': 'dog', 'id': 3, 'name': 'Emme'}
 
 .. _python_api_get:
 
@@ -415,22 +415,22 @@ Retrieving a specific record
 
 You can retrieve a record by its primary key using ``table.get()``::
 
-    >>> db = sqlite_utils.Database("dogs.db")
-    >>> print(db["dogs"].get(1))
-    {'id': 1, 'age': 4, 'name': 'Cleo'}
+    >>> db = duckdb_utils.Database("cats.duckdb")
+    >>> print(db["cats"].get(1))
+    {'id': 1, 'age': 4, 'name': 'Emme'}
 
 If the table has a compound primary key you can pass in the primary key values as a tuple::
 
-    >>> db["compound_dogs"].get(("mixed", 3))
+    >>> db["compound_cats"].get(("mixed", 3))
 
 If the record does not exist a ``NotFoundError`` will be raised:
 
 .. code-block:: python
 
-    from sqlite_utils.db import NotFoundError
+    from duckdb_utils.duckdb import NotFoundError
 
     try:
-        row = db["dogs"].get(5)
+        row = db["cats"].get(5)
     except NotFoundError:
         print("Dog not found")
 
@@ -441,9 +441,9 @@ Showing the schema
 
 The ``db.schema`` property returns the full SQL schema for the database as a string::
 
-    >>> db = sqlite_utils.Database("dogs.db")
+    >>> db = duckdb_utils.Database("cats.duckdb")
     >>> print(db.schema)
-    CREATE TABLE "dogs" (
+    CREATE TABLE "cats" (
         [id] INTEGER PRIMARY KEY,
         [name] TEXT
     );
@@ -457,21 +457,21 @@ The easiest way to create a new table is to insert a record into it:
 
 .. code-block:: python
 
-    from sqlite_utils import Database
-    import sqlite3
+    from duckdb_utils import Database
+    import duckdb
 
-    db = Database("dogs.db")
-    dogs = db["dogs"]
-    dogs.insert({
-        "name": "Cleo",
-        "twitter": "cleopaws",
+    db = Database("cats.duckdb")
+    cats = db["cats"]
+    cats.insert({
+        "name": "Emme",
+        "twitter": "emmepaws",
         "age": 3,
         "is_good_dog": True,
     })
 
-This will automatically create a new table called "dogs" with the following schema::
+This will automatically create a new table called "cats" with the following schema::
 
-    CREATE TABLE dogs (
+    CREATE TABLE cats (
         name TEXT,
         twitter TEXT,
         age INTEGER,
@@ -482,17 +482,17 @@ You can also specify a primary key by passing the ``pk=`` parameter to the ``.in
 
 .. code-block:: python
 
-    dogs.insert({
+    cats.insert({
         "id": 1,
-        "name": "Cleo",
-        "twitter": "cleopaws",
+        "name": "Emme",
+        "twitter": "emmepaws",
         "age": 3,
         "is_good_dog": True,
     }, pk="id")
 
-After inserting a row like this, the ``dogs.last_rowid`` property will return the SQLite ``rowid`` assigned to the most recently inserted record.
+After inserting a row like this, the ``cats.last_rowid`` property will return the DuckDB ``rowid`` assigned to the most recently inserted record.
 
-The ``dogs.last_pk`` property will return the last inserted primary key value, if you specified one. This can be very useful when writing code that creates foreign keys or many-to-many relationships.
+The ``cats.last_pk`` property will return the last inserted primary key value, if you specified one. This can be very useful when writing code that creates foreign keys or many-to-many relationships.
 
 .. _python_api_custom_columns:
 
@@ -505,10 +505,10 @@ If you want to explicitly set the order of the columns you can do so using the `
 
 .. code-block:: python
 
-    db["dogs"].insert({
+    db["cats"].insert({
         "id": 1,
-        "name": "Cleo",
-        "twitter": "cleopaws",
+        "name": "Emme",
+        "twitter": "emmepaws",
         "age": 3,
         "is_good_dog": True,
     }, pk="id", column_order=("id", "twitter", "name"))
@@ -519,9 +519,9 @@ Column types are detected based on the example data provided. Sometimes you may 
 
 .. code-block:: python
 
-    db["dogs"].insert({
+    db["cats"].insert({
         "id": 1,
-        "name": "Cleo",
+        "name": "Emme",
         "age": "5",
     }, pk="id", columns={"age": int, "weight": float})
 
@@ -529,7 +529,7 @@ This will create a table with the following schema:
 
 .. code-block:: sql
 
-    CREATE TABLE [dogs] (
+    CREATE TABLE [cats] (
         [id] INTEGER PRIMARY KEY,
         [name] TEXT,
         [age] INTEGER,
@@ -555,7 +555,7 @@ The first argument here is a dictionary specifying the columns you would like to
 
 This method takes optional arguments ``pk=``, ``column_order=``, ``foreign_keys=``, ``not_null=set()`` and ``defaults=dict()`` - explained below.
 
-A ``sqlite_utils.utils.sqlite3.OperationalError`` will be raised if a table of that name already exists.
+A ``duckdb_utils.utils.duckdb.OperationalError`` will be raised if a table of that name already exists.
 
 You can pass ``ignore=True`` to ignore that error. You can also use ``if_not_exists=True`` to use the SQL ``CREATE TABLE IF NOT EXISTS`` pattern to achieve the same effect:
 
@@ -621,7 +621,7 @@ Specifying foreign keys
 
 Any operation that can create a table (``.create()``, ``.insert()``, ``.insert_all()``, ``.upsert()`` and ``.upsert_all()``) accepts an optional ``foreign_keys=`` argument which can be used to set up foreign key constraints for the table that is being created.
 
-If you are using your database with `Datasette <https://datasette.io/>`__, Datasette will detect these constraints and use them to generate hyperlinks to associated records.
+If you are using your database with `Datasette <https://databooth.com.au/>`__, Datasette will detect these constraints and use them to generate hyperlinks to associated records.
 
 The ``foreign_keys`` argument takes a list that indicates which foreign keys should be created. The list can take several forms. The simplest is a list of columns:
 
@@ -751,7 +751,7 @@ The ``table.duplicate()`` method creates a copy of the table, copying both the t
 
 The new ``authors_copy`` table will now contain a duplicate copy of the data from ``authors``.
 
-This method raises ``sqlite_utils.db.NoTable`` if the table does not exist.
+This method raises ``duckdb_utils.duckdb.NoTable`` if the table does not exist.
 
 .. _python_api_bulk_inserts:
 
@@ -764,10 +764,10 @@ Use it like this:
 
 .. code-block:: python
 
-    db["dogs"].insert_all([{
+    db["cats"].insert_all([{
         "id": 1,
-        "name": "Cleo",
-        "twitter": "cleopaws",
+        "name": "Emme",
+        "twitter": "emmepaws",
         "age": 3,
         "is_good_dog": True,
     }, {
@@ -778,7 +778,7 @@ Use it like this:
         "is_good_dog": True,
     }], pk="id", column_order=("id", "twitter", "name"))
 
-The column types used in the ``CREATE TABLE`` statement are automatically derived from the types of data in that first batch of rows. Any additional columns in subsequent batches will cause a ``sqlite3.OperationalError`` exception to be raised unless the ``alter=True`` argument is supplied, in which case the new columns will be created.
+The column types used in the ``CREATE TABLE`` statement are automatically derived from the types of data in that first batch of rows. Any additional columns in subsequent batches will cause a ``duckdb.OperationalError`` exception to be raised unless the ``alter=True`` argument is supplied, in which case the new columns will be created.
 
 The function can accept an iterator or generator of rows and will commit them according to the batch size. The default batch size is 100, but you can specify a different size using the ``batch_size`` parameter:
 
@@ -800,36 +800,36 @@ Pass ``analyze=True`` to run ``ANALYZE`` against the table after inserting the n
 Insert-replacing data
 =====================
 
-If you try to insert data using a primary key that already exists, the ``.insert()`` or ``.insert_all()`` method will raise a ``sqlite3.IntegrityError`` exception.
+If you try to insert data using a primary key that already exists, the ``.insert()`` or ``.insert_all()`` method will raise a ``duckdb.IntegrityError`` exception.
 
 This example that catches that exception:
 
 .. code-block:: python
 
-    from sqlite_utils.utils import sqlite3
+    from duckdb_utils.utils import duckdb
 
     try:
-        db["dogs"].insert({"id": 1, "name": "Cleo"}, pk="id")
-    except sqlite3.IntegrityError:
+        db["cats"].insert({"id": 1, "name": "Emme"}, pk="id")
+    except duckdb.IntegrityError:
         print("Record already exists with that primary key")
 
-Importing from ``sqlite_utils.utils.sqlite3`` ensures your code continues to work even if you are using the ``pysqlite3`` library instead of the Python standard library ``sqlite3`` module.
+Importing from ``duckdb_utils.utils.duckdb`` ensures your code continues to work even if you are using the ``pyduckdb`` library instead of the Python standard library ``duckdb`` module.
 
 Use the ``ignore=True`` parameter to ignore this error:
 
 .. code-block:: python
 
     # This fails silently if a record with id=1 already exists
-    db["dogs"].insert({"id": 1, "name": "Cleo"}, pk="id", ignore=True)
+    db["cats"].insert({"id": 1, "name": "Emme"}, pk="id", ignore=True)
 
 To replace any existing records that have a matching primary key, use the ``replace=True`` parameter to ``.insert()`` or ``.insert_all()``:
 
 .. code-block:: python
 
-    db["dogs"].insert_all([{
+    db["cats"].insert_all([{
         "id": 1,
-        "name": "Cleo",
-        "twitter": "cleopaws",
+        "name": "Emme",
+        "twitter": "emmepaws",
         "age": 3,
         "is_good_dog": True,
     }, {
@@ -841,7 +841,7 @@ To replace any existing records that have a matching primary key, use the ``repl
     }], pk="id", replace=True)
 
 .. note::
-    Prior to sqlite-utils 2.0 the ``.upsert()`` and ``.upsert_all()`` methods worked the same way as ``.insert(replace=True)`` does today. See :ref:`python_api_upsert` for the new behaviour of those methods introduced in 2.0.
+    Prior to duckdb-utils 2.0 the ``.upsert()`` and ``.upsert_all()`` methods worked the same way as ``.insert(replace=True)`` does today. See :ref:`python_api_upsert` for the new behaviour of those methods introduced in 2.0.
 
 .. _python_api_update:
 
@@ -850,22 +850,22 @@ Updating a specific record
 
 You can update a record by its primary key using ``table.update()``::
 
-    >>> db = sqlite_utils.Database("dogs.db")
-    >>> print(db["dogs"].get(1))
-    {'id': 1, 'age': 4, 'name': 'Cleo'}
-    >>> db["dogs"].update(1, {"age": 5})
-    >>> print(db["dogs"].get(1))
-    {'id': 1, 'age': 5, 'name': 'Cleo'}
+    >>> db = duckdb_utils.Database("cats.duckdb")
+    >>> print(db["cats"].get(1))
+    {'id': 1, 'age': 4, 'name': 'Emme'}
+    >>> db["cats"].update(1, {"age": 5})
+    >>> print(db["cats"].get(1))
+    {'id': 1, 'age': 5, 'name': 'Emme'}
 
 The first argument to ``update()`` is the primary key. This can be a single value, or a tuple if that table has a compound primary key::
 
-    >>> db["compound_dogs"].update((5, 3), {"name": "Updated"})
+    >>> db["compound_cats"].update((5, 3), {"name": "Updated"})
 
 The second argument is a dictionary of columns that should be updated, along with their new values.
 
 You can cause any missing columns to be added automatically using ``alter=True``::
 
-    >>> db["dogs"].update(1, {"breed": "Mutt"}, alter=True)
+    >>> db["cats"].update(1, {"breed": "Mutt"}, alter=True)
 
 .. _python_api_delete:
 
@@ -874,12 +874,12 @@ Deleting a specific record
 
 You can delete a record using ``table.delete()``::
 
-    >>> db = sqlite_utils.Database("dogs.db")
-    >>> db["dogs"].delete(1)
+    >>> db = duckdb_utils.Database("cats.duckdb")
+    >>> db["cats"].delete(1)
 
 The ``delete()`` method takes the primary key of the record. This can be a tuple of values if the row has a compound primary key::
 
-    >>> db["compound_dogs"].delete((5, 3))
+    >>> db["compound_cats"].delete((5, 3))
 
 .. _python_api_delete_where:
 
@@ -888,9 +888,9 @@ Deleting multiple records
 
 You can delete all records in a table that match a specific WHERE statement using ``table.delete_where()``::
 
-    >>> db = sqlite_utils.Database("dogs.db")
+    >>> db = duckdb_utils.Database("cats.duckdb")
     >>> # Delete every dog with age less than 3
-    >>> db["dogs"].delete_where("age < ?", [3])
+    >>> db["cats"].delete_where("age < ?", [3])
 
 Calling ``table.delete_where()`` with no other arguments will delete every row in the table.
 
@@ -903,14 +903,14 @@ Upserting data
 
 Upserting allows you to insert records if they do not exist and update them if they DO exist, based on matching against their primary key.
 
-For example, given the dogs database you could upsert the record for Cleo like so:
+For example, given the cats database you could upsert the record for Emme like so:
 
 .. code-block:: python
 
-    db["dogs"].upsert({
+    db["cats"].upsert({
         "id": 1,
-        "name": "Cleo",
-        "twitter": "cleopaws",
+        "name": "Emme",
+        "twitter": "emmepaws",
         "age": 4,
         "is_good_dog": True,
     }, pk="id", column_order=("id", "twitter", "name"))
@@ -924,34 +924,34 @@ Note that the ``pk`` and ``column_order`` parameters here are optional if you ar
 An ``upsert_all()`` method is also available, which behaves like ``insert_all()`` but performs upserts instead.
 
 .. note::
-    ``.upsert()`` and ``.upsert_all()`` in sqlite-utils 1.x worked like ``.insert(..., replace=True)`` and ``.insert_all(..., replace=True)`` do in 2.x. See `issue #66 <https://github.com/simonw/sqlite-utils/issues/66>`__ for details of this change.
+    ``.upsert()`` and ``.upsert_all()`` in duckdb-utils 1.x worked like ``.insert(..., replace=True)`` and ``.insert_all(..., replace=True)`` do in 2.x. See `issue #66 <https://github.com/databooth/duckdb-utils/issues/66>`__ for details of this change.
 
 .. _python_api_convert:
 
 Converting data in columns
 ==========================
 
-The ``table.convert(...)`` method can be used to apply a conversion function to the values in a column, either to update that column or to populate new columns. It is the Python library equivalent of the :ref:`sqlite-utils convert <cli_convert>` command.
+The ``table.convert(...)`` method can be used to apply a conversion function to the values in a column, either to update that column or to populate new columns. It is the Python library equivalent of the :ref:`duckdb-utils convert <cli_convert>` command.
 
-This feature works by registering a custom SQLite function that applies a Python transformation, then running a SQL query equivalent to ``UPDATE table SET column = convert_value(column);``
+This feature works by registering a custom DuckDB function that applies a Python transformation, then running a SQL query equivalent to ``UPDATE table SET column = convert_value(column);``
 
 To transform a specific column to uppercase, you would use the following:
 
 .. code-block:: python
 
-    db["dogs"].convert("name", lambda value: value.upper())
+    db["cats"].convert("name", lambda value: value.upper())
 
 You can pass a list of columns, in which case the transformation will be applied to each one:
 
 .. code-block:: python
 
-    db["dogs"].convert(["name", "twitter"], lambda value: value.upper())
+    db["cats"].convert(["name", "twitter"], lambda value: value.upper())
 
 To save the output to of the transformation to a different column, use the ``output=`` parameter:
 
 .. code-block:: python
 
-    db["dogs"].convert("name", lambda value: value.upper(), output="name_upper")
+    db["cats"].convert("name", lambda value: value.upper(), output="name_upper")
 
 This will add the new column, if it does not already exist. You can pass ``output_type=int`` or some other type to control the type of the new column - otherwise it will default to text.
 
@@ -1066,23 +1066,23 @@ To extract the ``species`` column out to a separate ``Species`` table, you can d
 Working with many-to-many relationships
 =======================================
 
-``sqlite-utils`` includes a shortcut for creating records using many-to-many relationships in the form of the ``table.m2m(...)`` method.
+``duckdb-utils`` includes a shortcut for creating records using many-to-many relationships in the form of the ``table.m2m(...)`` method.
 
 Here's how to create two new records and connect them via a many-to-many table in a single line of code:
 
 .. code-block:: python
 
-    db["dogs"].insert({"id": 1, "name": "Cleo"}, pk="id").m2m(
+    db["cats"].insert({"id": 1, "name": "Emme"}, pk="id").m2m(
         "humans", {"id": 1, "name": "Natalie"}, pk="id"
     )
 
-Running this example actually creates three tables: ``dogs``, ``humans`` and a many-to-many ``dogs_humans`` table. It will insert a record into each of those tables.
+Running this example actually creates three tables: ``cats``, ``humans`` and a many-to-many ``cats_humans`` table. It will insert a record into each of those tables.
 
 The ``.m2m()`` method executes against the last record that was affected by ``.insert()`` or ``.update()`` - the record identified by the ``table.last_pk`` property. To execute ``.m2m()`` against a specific record you can first select it by passing its primary key to ``.update()``:
 
 .. code-block:: python
 
-    db["dogs"].update(1).m2m(
+    db["cats"].update(1).m2m(
         "humans", {"id": 2, "name": "Simon"}, pk="id"
     )
 
@@ -1095,9 +1095,9 @@ Here's alternative code that creates the dog record and adds two people to it:
 .. code-block:: python
 
     db = Database(memory=True)
-    dogs = db.table("dogs", pk="id")
+    cats = db.table("cats", pk="id")
     humans = db.table("humans", pk="id")
-    dogs.insert({"id": 1, "name": "Cleo"}).m2m(
+    cats.insert({"id": 1, "name": "Emme"}).m2m(
         humans, [
             {"id": 1, "name": "Natalie"},
             {"id": 2, "name": "Simon"}
@@ -1106,9 +1106,9 @@ Here's alternative code that creates the dog record and adds two people to it:
 
 The method will attempt to find an existing many-to-many table by looking for a table that has foreign key relationships against both of the tables in the relationship.
 
-If it cannot find such a table, it will create a new one using the names of the two tables - ``dogs_humans`` in this example. You can customize the name of this table using the ``m2m_table=`` argument to ``.m2m()``.
+If it cannot find such a table, it will create a new one using the names of the two tables - ``cats_humans`` in this example. You can customize the name of this table using the ``m2m_table=`` argument to ``.m2m()``.
 
-It it finds multiple candidate tables with foreign keys to both of the specified tables it will raise a ``sqlite_utils.db.NoObviousTable`` exception. You can avoid this error by specifying the correct table using ``m2m_table=``.
+It it finds multiple candidate tables with foreign keys to both of the specified tables it will raise a ``duckdb_utils.duckdb.NoObviousTable`` exception. You can avoid this error by specifying the correct table using ``m2m_table=``.
 
 The ``.m2m()`` method also takes an optional ``pk=`` argument to specify the primary key that should be used if the table is created, and an optional ``alter=True`` argument to specify that any missing columns of an existing table should be added if they are needed.
 
@@ -1119,13 +1119,13 @@ Using m2m and lookup tables together
 
 You can work with (or create) lookup tables as part of a call to ``.m2m()`` using the ``lookup=`` parameter. This accepts the same argument as ``table.lookup()`` does - a dictionary of values that should be used to lookup or create a row in the lookup table.
 
-This example creates a dogs table, populates it, creates a characteristics table, populates that and sets up a many-to-many relationship between the two. It chains ``.m2m()`` twice to create two associated characteristics:
+This example creates a cats table, populates it, creates a characteristics table, populates that and sets up a many-to-many relationship between the two. It chains ``.m2m()`` twice to create two associated characteristics:
 
 .. code-block:: python
 
     db = Database(memory=True)
-    dogs = db.table("dogs", pk="id")
-    dogs.insert({"id": 1, "name": "Cleo"}).m2m(
+    cats = db.table("cats", pk="id")
+    cats.insert({"id": 1, "name": "Emme"}).m2m(
         "characteristics", lookup={
             "name": "Playful"
         }
@@ -1138,18 +1138,18 @@ This example creates a dogs table, populates it, creates a characteristics table
 You can inspect the database to see the results like this::
 
     >>> db.table_names()
-    ['dogs', 'characteristics', 'characteristics_dogs']
-    >>> list(db["dogs"].rows)
-    [{'id': 1, 'name': 'Cleo'}]
+    ['cats', 'characteristics', 'characteristics_cats']
+    >>> list(db["cats"].rows)
+    [{'id': 1, 'name': 'Emme'}]
     >>> list(db["characteristics"].rows)
     [{'id': 1, 'name': 'Playful'}, {'id': 2, 'name': 'Opinionated'}]
-    >>> list(db["characteristics_dogs"].rows)
-    [{'characteristics_id': 1, 'dogs_id': 1}, {'characteristics_id': 2, 'dogs_id': 1}]
-    >>> print(db["characteristics_dogs"].schema)
-    CREATE TABLE [characteristics_dogs] (
+    >>> list(db["characteristics_cats"].rows)
+    [{'characteristics_id': 1, 'cats_id': 1}, {'characteristics_id': 2, 'cats_id': 1}]
+    >>> print(db["characteristics_cats"].schema)
+    CREATE TABLE [characteristics_cats] (
         [characteristics_id] INTEGER REFERENCES [characteristics]([id]),
-        [dogs_id] INTEGER REFERENCES [dogs]([id]),
-        PRIMARY KEY ([characteristics_id], [dogs_id])
+        [cats_id] INTEGER REFERENCES [cats]([id]),
+        PRIMARY KEY ([characteristics_id], [cats_id])
     )
 
 .. _python_api_analyze_column:
@@ -1211,19 +1211,19 @@ You can add a new column to a table using the ``.add_column(col_name, col_type)`
 
 .. code-block:: python
 
-    db["dogs"].add_column("instagram", str)
-    db["dogs"].add_column("weight", float)
-    db["dogs"].add_column("dob", datetime.date)
-    db["dogs"].add_column("image", "BLOB")
-    db["dogs"].add_column("website") # str by default
+    db["cats"].add_column("instagram", str)
+    db["cats"].add_column("weight", float)
+    db["cats"].add_column("dob", datetime.date)
+    db["cats"].add_column("image", "BLOB")
+    db["cats"].add_column("website") # str by default
 
-You can specify the ``col_type`` argument either using a SQLite type as a string, or by directly passing a Python type e.g. ``str`` or ``float``.
+You can specify the ``col_type`` argument either using a DuckDB type as a string, or by directly passing a Python type e.g. ``str`` or ``float``.
 
 The ``col_type`` is optional - if you omit it the type of ``TEXT`` will be used.
 
-SQLite types you can specify are ``"TEXT"``, ``"INTEGER"``, ``"FLOAT"`` or ``"BLOB"``.
+DuckDB types you can specify are ``"TEXT"``, ``"INTEGER"``, ``"FLOAT"`` or ``"BLOB"``.
 
-If you pass a Python type, it will be mapped to SQLite types as shown here::
+If you pass a Python type, it will be mapped to DuckDB types as shown here::
 
     float: "FLOAT"
     int: "INTEGER"
@@ -1252,7 +1252,7 @@ You can also add a column that is a foreign key reference to another table using
 
 .. code-block:: python
 
-    db["dogs"].add_column("species_id", fk="species")
+    db["cats"].add_column("species_id", fk="species")
 
 This will automatically detect the name of the primary key on the species table and use that (and its type) for the new column.
 
@@ -1260,13 +1260,13 @@ You can explicitly specify the column you wish to reference using ``fk_col``:
 
 .. code-block:: python
 
-    db["dogs"].add_column("species_id", fk="species", fk_col="ref")
+    db["cats"].add_column("species_id", fk="species", fk_col="ref")
 
 You can set a ``NOT NULL DEFAULT 'x'`` constraint on the new column using ``not_null_default``:
 
 .. code-block:: python
 
-    db["dogs"].add_column("friends_count", int, not_null_default=0)
+    db["cats"].add_column("friends_count", int, not_null_default=0)
 
 .. _python_api_add_column_alter:
 
@@ -1296,11 +1296,11 @@ You can insert or update data that includes new columns and have the table autom
 Adding foreign key constraints
 ==============================
 
-The SQLite ``ALTER TABLE`` statement doesn't have the ability to add foreign key references to an existing column.
+The DuckDB ``ALTER TABLE`` statement doesn't have the ability to add foreign key references to an existing column.
 
 The ``add_foreign_key()`` method here is a convenient wrapper around :ref:`table.transform() <python_api_transform>`.
 
-It's also possible to add foreign keys by directly updating the `sqlite_master` table. The `sqlite-utils-fast-fks <https://github.com/simonw/sqlite-utils-fast-fks>`__ plugin implements this pattern, using code that was included with ``sqlite-utils`` prior to version 3.35.
+It's also possible to add foreign keys by directly updating the `duckdb_master` table. The `duckdb-utils-fast-fks <https://github.com/databooth/duckdb-utils-fast-fks>`__ plugin implements this pattern, using code that was included with ``duckdb-utils`` prior to version 3.35.
 
 Here's an example of this mechanism in action:
 
@@ -1321,7 +1321,7 @@ The ``table.add_foreign_key(column, other_table, other_column)`` method takes th
 - If the column is of format ``author_id``, look for tables called ``author`` or ``authors``
 - If the column does not end in ``_id``, try looking for a table with the exact name of the column or that name with an added ``s``
 
-This method first checks that the specified foreign key references tables and columns that exist and does not clash with an existing foreign key. It will raise a ``sqlite_utils.db.AlterError`` exception if these checks fail.
+This method first checks that the specified foreign key references tables and columns that exist and does not clash with an existing foreign key. It will raise a ``duckdb_utils.duckdb.AlterError`` exception if these checks fail.
 
 To ignore the case where the key already exists, use ``ignore=True``:
 
@@ -1341,11 +1341,11 @@ Here's an example adding two foreign keys at once:
 .. code-block:: python
 
     db.add_foreign_keys([
-        ("dogs", "breed_id", "breeds", "id"),
-        ("dogs", "home_town_id", "towns", "id")
+        ("cats", "breed_id", "breeds", "id"),
+        ("cats", "home_town_id", "towns", "id")
     ])
 
-This method runs the same checks as ``.add_foreign_keys()`` and will raise ``sqlite_utils.db.AlterError`` if those checks fail.
+This method runs the same checks as ``.add_foreign_keys()`` and will raise ``duckdb_utils.duckdb.AlterError`` if those checks fail.
 
 .. _python_api_index_foreign_keys:
 
@@ -1380,9 +1380,9 @@ Pass ``ignore=True`` if you want to ignore the error caused by the table or view
 Transforming a table
 ====================
 
-The SQLite ``ALTER TABLE`` statement is limited. It can add and drop columns and rename tables, but it cannot change column types, change ``NOT NULL`` status or change the primary key for a table.
+The DuckDB ``ALTER TABLE`` statement is limited. It can add and drop columns and rename tables, but it cannot change column types, change ``NOT NULL`` status or change the primary key for a table.
 
-The ``table.transform()`` method can do all of these things, by implementing a multi-step pattern `described in the SQLite documentation <https://www.sqlite.org/lang_altertable.html#otheralter>`__:
+The ``table.transform()`` method can do all of these things, by implementing a multi-step pattern `described in the DuckDB documentation <https://www.sqlite.org/lang_altertable.html#otheralter>`__:
 
 1. Start a transaction
 2. ``CREATE TABLE tablename_new_x123`` with the required changes
@@ -1393,7 +1393,7 @@ The ``table.transform()`` method can do all of these things, by implementing a m
 
 The ``.transform()`` method takes a number of parameters, all of which are optional.
 
-As a bonus, calling ``.transform()`` will reformat the schema for the table that is stored in SQLite to make it more readable. This works even if you call it without any arguments.
+As a bonus, calling ``.transform()`` will reformat the schema for the table that is stored in DuckDB to make it more readable. This works even if you call it without any arguments.
 
 To keep the original table around instead of dropping it, pass the ``keep_table=`` option and specify the name of the table you would like it to be renamed to:
 
@@ -1730,28 +1730,28 @@ Sometimes you will find yourself working with a dataset that includes rows that 
 
 In these cases, a useful technique is to create an ID that is derived from the sha1 hash of the row contents.
 
-``sqlite-utils`` can do this for you using the ``hash_id=`` option. For example::
+``duckdb-utils`` can do this for you using the ``hash_id=`` option. For example::
 
-    db = sqlite_utils.Database("dogs.db")
-    db["dogs"].upsert({"name": "Cleo", "twitter": "cleopaws"}, hash_id="id")
-    print(list(db["dogs]))
+    db = duckdb_utils.Database("cats.duckdb")
+    db["cats"].upsert({"name": "Emme", "twitter": "emmepaws"}, hash_id="id")
+    print(list(db["cats]))
 
 Outputs::
 
-    [{'id': 'f501265970505d9825d8d9f590bfab3519fb20b1', 'name': 'Cleo', 'twitter': 'cleopaws'}]
+    [{'id': 'f501265970505d9825d8d9f590bfab3519fb20b1', 'name': 'Emme', 'twitter': 'emmepaws'}]
 
 If you are going to use that ID straight away, you can access it using ``last_pk``::
 
-    dog_id = db["dogs"].upsert({
-        "name": "Cleo",
-        "twitter": "cleopaws"
+    dog_id = db["cats"].upsert({
+        "name": "Emme",
+        "twitter": "emmepaws"
     }, hash_id="id").last_pk
     # dog_id is now "f501265970505d9825d8d9f590bfab3519fb20b1"
 
 The hash will be created using all of the column values. To create a hash using a subset of the columns, pass the ``hash_id_columns=`` parameter::
 
-    db["dogs"].upsert(
-        {"name": "Cleo", "twitter": "cleopaws", "age": 7},
+    db["cats"].upsert(
+        {"name": "Emme", "twitter": "emmepaws", "age": 7},
         hash_id_columns=("name", "twitter")
     )
 
@@ -1768,24 +1768,24 @@ The ``.create_view()`` method on the database class can be used to create a view
 
 .. code-block:: python
 
-    db.create_view("good_dogs", """
-        select * from dogs where is_good_dog = 1
+    db.create_view("good_cats", """
+        select * from cats where is_good_dog = 1
     """)
 
-This will raise a ``sqlite_utils.utils.OperationalError`` if a view with that name already exists.
+This will raise a ``duckdb_utils.utils.OperationalError`` if a view with that name already exists.
 
 You can pass ``ignore=True`` to silently ignore an existing view and do nothing, or ``replace=True`` to replace an existing view with a new definition if your select statement differs from the current view:
 
 .. code-block:: python
 
-    db.create_view("good_dogs", """
-        select * from dogs where is_good_dog = 1
+    db.create_view("good_cats", """
+        select * from cats where is_good_dog = 1
     """, replace=True)
 
 Storing JSON
 ============
 
-SQLite has `excellent JSON support <https://www.sqlite.org/json1.html>`_, and ``sqlite-utils`` can help you take advantage of this: if you attempt to insert a value that can be represented as a JSON list or dictionary, ``sqlite-utils`` will create TEXT column and store your data as serialized JSON. This means you can quickly store even complex data structures in SQLite and query them using JSON features.
+DuckDB has `excellent JSON support <https://www.sqlite.org/json1.html>`_, and ``duckdb-utils`` can help you take advantage of this: if you attempt to insert a value that can be represented as a JSON list or dictionary, ``duckdb-utils`` will create TEXT column and store your data as serialized JSON. This means you can quickly store even complex data structures in DuckDB and query them using JSON features.
 
 For example:
 
@@ -1840,15 +1840,15 @@ A more useful example: if you are working with `SpatiaLite <https://www.gaia-gis
 
 .. code-block:: python
 
-    import sqlite3
-    import sqlite_utils
+    import duckdb
+    import duckdb_utils
     from shapely.geometry import shape
     import httpx
 
-    db = sqlite_utils.Database("places.db")
+    db = duckdb_utils.Database("places.duckdb")
     # Initialize SpatiaLite
     db.init_spatialite()
-    # Use sqlite-utils to create a places table
+    # Use duckdb-utils to create a places table
     places = db["places"].create({"id": int, "name": str})
 
     # Add a SpatiaLite 'geometry' column
@@ -1871,14 +1871,14 @@ A more useful example: if you are working with `SpatiaLite <https://www.gaia-gis
 
 This example uses gographical data from `Who's On First <https://whosonfirst.org/>`__ and depends on the `Shapely <https://shapely.readthedocs.io/en/stable/manual.html>`__ and `HTTPX <https://www.python-httpx.org/>`__ Python libraries.
 
-.. _python_api_sqlite_version:
+.. _python_api_duckdb_version:
 
-Checking the SQLite version
+Checking the DuckDB version
 ===========================
 
-The ``db.sqlite_version`` property returns a tuple of integers representing the version of SQLite used for that database object::
+The ``db.duckdb_version`` property returns a tuple of integers representing the version of DuckDB used for that database object::
 
-    >>> db.sqlite_version
+    >>> db.duckdb_version
     (3, 36, 0)
 
 .. _python_api_itedump:
@@ -1892,9 +1892,9 @@ The ``db.iterdump()`` method returns a sequence of SQL strings representing a co
 
     full_sql = "".join(db.iterdump())
 
-This uses the `sqlite3.Connection.iterdump() <https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection.iterdump>`__ method.
+This uses the `duckdb.connection.iterdump() <https://docs.python.org/3/library/duckdb.html#duckdb.connection.iterdump>`__ method.
 
-If you are using ``pysqlite3`` or ``sqlean.py`` the underlying method may be missing. If you install the `sqlite-dump <https://pypi.org/project/sqlite-dump/>`__ package then the ``db.iterdump()`` method will use that implementation instead:
+If you are using ``pyduckdb`` or ``sqlean.py`` the underlying method may be missing. If you install the `sqlite-dump <https://pypi.org/project/sqlite-dump/>`__ package then the ``db.iterdump()`` method will use that implementation instead:
 
 .. code-block:: bash
 
@@ -1986,7 +1986,7 @@ If a table has no primary keys but is a `rowid table <https://www.sqlite.org/row
 .use_rowid
 ----------
 
-Almost all SQLite tables have a ``rowid`` column, but a table with no explicitly defined primary keys must use that ``rowid`` as the primary key for identifying individual rows. The ``.use_rowid`` property checks to see if a table needs to use the ``rowid`` in this way - it returns ``True`` if the table has no explicitly defined primary keys and ``False`` otherwise.
+Almost all DuckDB tables have a ``rowid`` column, but a table with no explicitly defined primary keys must use that ``rowid`` as the primary key for identifying individual rows. The ``.use_rowid`` property checks to see if a table needs to use the ``rowid`` in this way - it returns ``True`` if the table has no explicitly defined primary keys and ``False`` otherwise.
 
     >>> db["PlantType"].use_rowid
     False
@@ -2049,7 +2049,7 @@ The ``.schema`` property outputs the table's schema as a SQL string::
 .strict
 -------
 
-The ``.strict`` property identifies if the table is a `SQLite STRICT table <https://www.sqlite.org/stricttables.html>`__.
+The ``.strict`` property identifies if the table is a `DuckDB STRICT table <https://www.sqlite.org/stricttables.html>`__.
 
 ::
 
@@ -2078,7 +2078,7 @@ The ``.indexes`` property returns all indexes created for a table, as a list of 
 .xindexes
 ---------
 
-The ``.xindexes`` property returns more detailed information about the indexes on the table, using the SQLite `PRAGMA index_xinfo() <https://sqlite.org/pragma.html#pragma_index_xinfo>`__ mechanism. It returns a list of ``XIndex(name, columns)`` named tuples, where ``columns`` is a list of ``XIndexColumn(seqno, cid, name, desc, coll, key)`` named tuples.
+The ``.xindexes`` property returns more detailed information about the indexes on the table, using the DuckDB `PRAGMA index_xinfo() <https://sqlite.org/pragma.html#pragma_index_xinfo>`__ mechanism. It returns a list of ``XIndex(name, columns)`` named tuples, where ``columns`` is a list of ``XIndexColumn(seqno, cid, name, desc, coll, key)`` named tuples.
 
 ::
 
@@ -2144,7 +2144,7 @@ The same property exists on the database, and will return all triggers across al
 .detect_fts()
 -------------
 
-The ``detect_fts()`` method returns the associated SQLite FTS table name, if one exists for this table. If the table has not been configured for full-text search it returns ``None``.
+The ``detect_fts()`` method returns the associated DuckDB FTS table name, if one exists for this table. If the table has not been configured for full-text search it returns ``None``.
 
 ::
 
@@ -2182,7 +2182,7 @@ The ``.has_counts_triggers`` property shows if a table has been configured with 
 db.supports_strict
 ------------------
 
-This property on the database object returns ``True`` if the available SQLite version supports `STRICT mode <https://www.sqlite.org/stricttables.html>`__, which was added in SQLite 3.37.0 (on 2021-11-27).
+This property on the database object returns ``True`` if the available DuckDB version supports `STRICT mode <https://www.sqlite.org/stricttables.html>`__, which was added in DuckDB 3.37.0 (on 2021-11-27).
 
 ::
 
@@ -2194,7 +2194,7 @@ This property on the database object returns ``True`` if the available SQLite ve
 Full-text search
 ================
 
-SQLite includes bundled extensions that implement `powerful full-text search <https://www.sqlite.org/fts5.html>`__.
+DuckDB includes bundled extensions that implement `powerful full-text search <https://www.sqlite.org/fts5.html>`__.
 
 .. _python_api_fts_enable:
 
@@ -2205,13 +2205,13 @@ You can enable full-text search on a table using ``.enable_fts(columns)``:
 
 .. code-block:: python
 
-    db["dogs"].enable_fts(["name", "twitter"])
+    db["cats"].enable_fts(["name", "twitter"])
 
 You can then run searches using the ``.search()`` method:
 
 .. code-block:: python
 
-    rows = list(db["dogs"].search("cleo"))
+    rows = list(db["cats"].search("emme"))
 
 This method returns a generator that can be looped over to get dictionaries for each row, similar to :ref:`python_api_rows`.
 
@@ -2219,26 +2219,26 @@ If you insert additional records into the table you will need to refresh the sea
 
 .. code-block:: python
 
-    db["dogs"].insert({
+    db["cats"].insert({
         "id": 2,
         "name": "Marnie",
         "twitter": "MarnieTheDog",
         "age": 16,
         "is_good_dog": True,
     }, pk="id")
-    db["dogs"].populate_fts(["name", "twitter"])
+    db["cats"].populate_fts(["name", "twitter"])
 
 A better solution is to use database triggers. You can set up database triggers to automatically update the full-text index using ``create_triggers=True``:
 
 .. code-block:: python
 
-    db["dogs"].enable_fts(["name", "twitter"], create_triggers=True)
+    db["cats"].enable_fts(["name", "twitter"], create_triggers=True)
 
 ``.enable_fts()`` defaults to using `FTS5 <https://www.sqlite.org/fts5.html>`__. If you wish to use `FTS4 <https://www.sqlite.org/fts3.html>`__ instead, use the following:
 
 .. code-block:: python
 
-    db["dogs"].enable_fts(["name", "twitter"], fts_version="FTS4")
+    db["cats"].enable_fts(["name", "twitter"], fts_version="FTS4")
 
 You can customize the tokenizer configured for the table using the ``tokenize=`` parameter. For example, to enable Porter stemming, where English words like "running" will match stemmed alternatives such as "run", use ``tokenize="porter"``:
 
@@ -2246,9 +2246,9 @@ You can customize the tokenizer configured for the table using the ``tokenize=``
 
     db["articles"].enable_fts(["headline", "body"], tokenize="porter")
 
-The SQLite documentation has more on `FTS5 tokenizers <https://www.sqlite.org/fts5.html#tokenizers>`__ and `FTS4 tokenizers <https://www.sqlite.org/fts3.html#tokenizer>`__. ``porter`` is a valid option for both.
+The DuckDB documentation has more on `FTS5 tokenizers <https://www.sqlite.org/fts5.html#tokenizers>`__ and `FTS4 tokenizers <https://www.sqlite.org/fts3.html#tokenizer>`__. ``porter`` is a valid option for both.
 
-If you attempt to configure a FTS table where one already exists, a ``sqlite3.OperationalError`` exception will be raised.
+If you attempt to configure a FTS table where one already exists, a ``duckdb.OperationalError`` exception will be raised.
 
 You can replace the existing table with a new configuration using ``replace=True``:
 
@@ -2262,16 +2262,16 @@ To remove the FTS tables and triggers you created, use the ``disable_fts()`` tab
 
 .. code-block:: python
 
-    db["dogs"].disable_fts()
+    db["cats"].disable_fts()
 
 .. _python_api_quote_fts:
 
 Quoting characters for use in search
 ------------------------------------
 
-SQLite supports `advanced search query syntax <https://www.sqlite.org/fts3.html#full_text_index_queries>`__. In some situations you may wish to disable this, since characters such as ``.`` may have special meaning that causes errors when searching for strings provided by your users.
+DuckDB supports `advanced search query syntax <https://www.sqlite.org/fts3.html#full_text_index_queries>`__. In some situations you may wish to disable this, since characters such as ``.`` may have special meaning that causes errors when searching for strings provided by your users.
 
-The ``db.quote_fts(query)`` method returns the query with SQLite full-text search quoting applied such that the query should be safe to use in a search::
+The ``db.quote_fts(query)`` method returns the query with DuckDB full-text search quoting applied such that the query should be safe to use in a search::
 
     db.quote_fts("Search term.")
     # Returns: '"Search" "term."'
@@ -2358,7 +2358,7 @@ Outputs:
     order by
         [articles_fts].rank
 
-This method detects if a SQLite table uses FTS4 or FTS5, and outputs the correct SQL for ordering by relevance depending on the search type.
+This method detects if a DuckDB table uses FTS4 or FTS5, and outputs the correct SQL for ordering by relevance depending on the search type.
 
 The FTS4 output looks something like this:
 
@@ -2382,7 +2382,7 @@ The FTS4 output looks something like this:
     order by
         rank_bm25(matchinfo([articles_fts], 'pcnalx'))
 
-This uses the ``rank_bm25()`` custom SQL function from `sqlite-fts4 <https://github.com/simonw/sqlite-fts4>`__. You can register that custom function against a ``Database`` connection using this method:
+This uses the ``rank_bm25()`` custom SQL function from `sqlite-fts4 <https://github.com/databooth/sqlite-fts4>`__. You can register that custom function against a ``Database`` connection using this method:
 
 .. code-block:: python
 
@@ -2397,17 +2397,17 @@ You can rebuild a table using the ``table.rebuild_fts()`` method. This is useful
 
 .. code-block:: python
 
-    db["dogs"].rebuild_fts()
+    db["cats"].rebuild_fts()
 
-This method can be called on a table that has been configured for full-text search - ``dogs`` in this instance -  or directly on a ``_fts`` table:
+This method can be called on a table that has been configured for full-text search - ``cats`` in this instance -  or directly on a ``_fts`` table:
 
 .. code-block:: python
 
-    db["dogs_fts"].rebuild_fts()
+    db["cats_fts"].rebuild_fts()
 
 This runs the following SQL::
 
-    INSERT INTO dogs_fts (dogs_fts) VALUES ("rebuild");
+    INSERT INTO cats_fts (cats_fts) VALUES ("rebuild");
 
 .. _python_api_fts_optimize:
 
@@ -2418,24 +2418,24 @@ Once you have populated a FTS table you can optimize it to dramatically reduce i
 
 .. code-block:: python
 
-    db["dogs"].optimize()
+    db["cats"].optimize()
 
 This runs the following SQL::
 
-    INSERT INTO dogs_fts (dogs_fts) VALUES ("optimize");
+    INSERT INTO cats_fts (cats_fts) VALUES ("optimize");
 
 .. _python_api_cached_table_counts:
 
 Cached table counts using triggers
 ==================================
 
-The ``select count(*)`` query in SQLite requires a full scan of the primary key index, and can take an increasingly long time as the table grows larger.
+The ``select count(*)`` query in DuckDB requires a full scan of the primary key index, and can take an increasingly long time as the table grows larger.
 
 The ``table.enable_counts()`` method can be used to configure triggers to continuously update a record in a ``_counts`` table. This value can then be used to quickly retrieve the count of rows in the associated table.
 
 .. code-block:: python
 
-    db["dogs"].enable_counts()
+    db["cats"].enable_counts()
 
 This will create the ``_counts`` table if it does not already exist, with the following schema:
 
@@ -2474,7 +2474,7 @@ You can set ``use_counts_table`` to ``True`` when you instantiate the database o
 
 .. code-block:: python
 
-    db = Database("global-power-plants.db", use_counts_table=True)
+    db = Database("global-power-plants.duckdb", use_counts_table=True)
 
 If the property is ``True`` any calls to the ``table.count`` property will first attempt to find the cached count in the ``_counts`` table, and fall back on a ``count(*)`` query if the value is not available or the table is missing.
 
@@ -2495,7 +2495,7 @@ You can create an index on a table using the ``.create_index(columns)`` method. 
 
 .. code-block:: python
 
-    db["dogs"].create_index(["is_good_dog"])
+    db["cats"].create_index(["is_good_dog"])
 
 By default the index will be named ``idx_{table-name}_{columns}``. If you pass ``find_unique_name=True`` and the automatically derived name already exists, an available name will be found by incrementing a suffix number, for example ``idx_items_title_2``.
 
@@ -2503,27 +2503,27 @@ You can customize the name of the created index by passing the ``index_name`` pa
 
 .. code-block:: python
 
-    db["dogs"].create_index(
+    db["cats"].create_index(
         ["is_good_dog", "age"],
-        index_name="good_dogs_by_age"
+        index_name="good_cats_by_age"
     )
 
 To create an index in descending order for a column, wrap the column name in ``db.DescIndex()`` like this:
 
 .. code-block:: python
 
-    from sqlite_utils.db import DescIndex
+    from duckdb_utils.duckdb import DescIndex
 
-    db["dogs"].create_index(
+    db["cats"].create_index(
         ["is_good_dog", DescIndex("age")],
-        index_name="good_dogs_by_age"
+        index_name="good_cats_by_age"
     )
 
 You can create a unique index by passing ``unique=True``:
 
 .. code-block:: python
 
-    db["dogs"].create_index(["name"], unique=True)
+    db["cats"].create_index(["name"], unique=True)
 
 Use ``if_not_exists=True`` to do nothing if an index with that name already exists.
 
@@ -2534,7 +2534,7 @@ Pass ``analyze=True`` to run ``ANALYZE`` against the new index after creating it
 Optimizing index usage with ANALYZE
 ===================================
 
-The `SQLite ANALYZE command <https://www.sqlite.org/lang_analyze.html>`__ builds a table of statistics which the query planner can use to make better decisions about which indexes to use for a given query.
+The `DuckDB ANALYZE command <https://www.sqlite.org/lang_analyze.html>`__ builds a table of statistics which the query planner can use to make better decisions about which indexes to use for a given query.
 
 You should run ``ANALYZE`` if your database is large and you do not think your indexes are being efficiently used.
 
@@ -2554,7 +2554,7 @@ To run against all indexes attached to a specific table, you can either pass the
 
 .. code-block:: python
 
-    db["dogs"].analyze()
+    db["cats"].analyze()
 
 .. _python_api_vacuum:
 
@@ -2565,7 +2565,7 @@ You can optimize your database by running VACUUM against it like so:
 
 .. code-block:: python
 
-    Database("my_database.db").vacuum()
+    Database("my_database.duckdb").vacuum()
 
 .. _python_api_wal:
 
@@ -2576,19 +2576,19 @@ You can enable `Write-Ahead Logging <https://www.sqlite.org/wal.html>`__ for a d
 
 .. code-block:: python
 
-    Database("my_database.db").enable_wal()
+    Database("my_database.duckdb").enable_wal()
 
 You can disable WAL mode using ``.disable_wal()``:
 
 .. code-block:: python
 
-    Database("my_database.db").disable_wal()
+    Database("my_database.duckdb").disable_wal()
 
 You can check the current journal mode for a database using the ``journal_mode`` property:
 
 .. code-block:: python
 
-    journal_mode = Database("my_database.db").journal_mode
+    journal_mode = Database("my_database.duckdb").journal_mode
 
 This will usually be ``wal`` or ``delete`` (meaning WAL is disabled), but can have other values - see the `PRAGMA journal_mode <https://www.sqlite.org/pragma.html#pragma_journal_mode>`__ documentation.
 
@@ -2617,7 +2617,7 @@ For example:
 
 .. code-block:: python
 
-    from sqlite_utils import Database, suggest_column_types
+    from duckdb_utils import Database, suggest_column_types
 
     cats = [{
         "id": 1,
@@ -2642,7 +2642,7 @@ For example:
     #  "thumbnail": <class 'bytes'>}
 
     # Create the table
-    db = Database("cats.db")
+    db = Database("cats.duckdb")
     db["cats"].create(types, pk="id")
     # Insert the records
     db["cats"].insert_all(cats)
@@ -2665,13 +2665,13 @@ For example:
 Registering custom SQL functions
 ================================
 
-SQLite supports registering custom SQL functions written in Python. The ``db.register_function()`` method lets you register these functions, and keeps track of functions that have already been registered.
+DuckDB supports registering custom SQL functions written in Python. The ``db.register_function()`` method lets you register these functions, and keeps track of functions that have already been registered.
 
 If you use it as a method it will automatically detect the name and number of arguments needed by the function:
 
 .. code-block:: python
 
-    from sqlite_utils import Database
+    from duckdb_utils import Database
 
     db = Database(memory=True)
 
@@ -2702,7 +2702,7 @@ By default, the name of the Python function will be used as the name of the SQL 
 
     print(db.execute('select rev("hello")').fetchone()[0])
 
-Python 3.8 added the ability to register `deterministic SQLite functions <https://sqlite.org/deterministic.html>`__, allowing you to indicate that a function will return the exact same result for any given inputs and hence allowing SQLite to apply some performance optimizations. You can mark a function as deterministic using ``deterministic=True``, like this:
+Python 3.8 added the ability to register `deterministic DuckDB functions <https://sqlite.org/deterministic.html>`__, allowing you to indicate that a function will return the exact same result for any given inputs and hence allowing DuckDB to apply some performance optimizations. You can mark a function as deterministic using ``deterministic=True``, like this:
 
 .. code-block:: python
 
@@ -2726,13 +2726,13 @@ Exceptions that occur inside a user-defined function default to returning the fo
 
     Unexpected error: user-defined function raised exception
 
-You can cause ``sqlite3`` to return more useful errors, including the traceback from the custom function, by executing the following before your custom functions are executed:
+You can cause ``duckdb`` to return more useful errors, including the traceback from the custom function, by executing the following before your custom functions are executed:
 
 .. code-block:: python
 
-    from sqlite_utils.utils import sqlite3
+    from duckdb_utils.utils import duckdb
 
-    sqlite3.enable_callback_tracebacks(True)
+    duckdb.enable_callback_tracebacks(True)
 
 .. _python_api_quote:
 
@@ -2741,7 +2741,7 @@ Quoting strings for use in SQL
 
 In almost all cases you should pass values to your SQL queries using the optional ``parameters`` argument to ``db.query()``, as described in :ref:`python_api_parameters`.
 
-If that option isn't relevant to your use-case you can to quote a string for use with SQLite using the ``db.quote()`` method, like so:
+If that option isn't relevant to your use-case you can to quote a string for use with DuckDB using the ``db.quote()`` method, like so:
 
 ::
 
@@ -2756,9 +2756,9 @@ If that option isn't relevant to your use-case you can to quote a string for use
 Reading rows from a file
 ========================
 
-The ``sqlite_utils.utils.rows_from_file()`` helper function can read rows (a sequence of dictionaries) from CSV, TSV, JSON or newline-delimited JSON files.
+The ``duckdb_utils.utils.rows_from_file()`` helper function can read rows (a sequence of dictionaries) from CSV, TSV, JSON or newline-delimited JSON files.
 
-.. autofunction:: sqlite_utils.utils.rows_from_file
+.. autofunction:: duckdb_utils.utils.rows_from_file
    :noindex:
 
 .. _python_api_maximize_csv_field_size_limit:
@@ -2774,11 +2774,11 @@ The Python standard library ``csv`` module enforces a field size limit. You can 
 
 The maximum possible value for this is not documented, and varies between systems.
 
-Calling ``sqlite_utils.utils.maximize_csv_field_size_limit()`` will set the value to the highest possible for the current system:
+Calling ``duckdb_utils.utils.maximize_csv_field_size_limit()`` will set the value to the highest possible for the current system:
 
 .. code-block:: python
 
-    from sqlite_utils.utils import maximize_csv_field_size_limit
+    from duckdb_utils.utils import maximize_csv_field_size_limit
 
     maximize_csv_field_size_limit()
 
@@ -2787,7 +2787,7 @@ If you need to reset to the original value after calling this function you can d
 
 .. code-block:: python
 
-    from sqlite_utils.utils import ORIGINAL_CSV_FIELD_SIZE_LIMIT
+    from duckdb_utils.utils import ORIGINAL_CSV_FIELD_SIZE_LIMIT
     import csv
 
     csv.field_size_limit(ORIGINAL_CSV_FIELD_SIZE_LIMIT)
@@ -2807,17 +2807,17 @@ Consider this example:
 
     import csv, io
 
-    csv_file = io.StringIO("id,name\n1,Cleo\n2,Cardi")
+    csv_file = io.StringIO("id,name\n1,Emme\n2,Cardi")
     rows = list(csv.DictReader(csv_file))
 
     # rows is now this:
-    # [{'id': '1', 'name': 'Cleo'}, {'id': '2', 'name': 'Cardi'}]
+    # [{'id': '1', 'name': 'Emme'}, {'id': '2', 'name': 'Cardi'}]
 
 If we insert this data directly into a table we will get a schema that is entirely ``TEXT`` columns:
 
 .. code-block:: python
 
-    from sqlite_utils import Database
+    from duckdb_utils import Database
 
     db = Database(memory=True)
     db["creatures"].insert_all(rows)
@@ -2832,7 +2832,7 @@ We can detect the best column types using a ``TypeTracker`` instance:
 
 .. code-block:: python
 
-    from sqlite_utils.utils import TypeTracker
+    from duckdb_utils.utils import TypeTracker
 
     tracker = TypeTracker()
     db["creatures2"].insert_all(tracker.wrap(rows))
@@ -2856,14 +2856,14 @@ We can then apply those types to our new table using the :ref:`table.transform()
 SpatiaLite helpers
 ==================
 
-`SpatiaLite <https://www.gaia-gis.it/fossil/libspatialite/index>`__ is a geographic extension to SQLite (similar to PostgreSQL + PostGIS). Using requires finding, loading and initializing the extension, adding geometry columns to existing tables and optionally creating spatial indexes. The utilities here help streamline that setup.
+`SpatiaLite <https://www.gaia-gis.it/fossil/libspatialite/index>`__ is a geographic extension to DuckDB (similar to PostgreSQL + PostGIS). Using requires finding, loading and initializing the extension, adding geometry columns to existing tables and optionally creating spatial indexes. The utilities here help streamline that setup.
 
 .. _python_api_gis_init_spatialite:
 
 Initialize SpatiaLite
 ---------------------
 
-.. automethod:: sqlite_utils.db.Database.init_spatialite
+.. automethod:: duckdb_utils.duckdb.Database.init_spatialite
    :noindex:
 
 .. _python_api_gis_find_spatialite:
@@ -2871,14 +2871,14 @@ Initialize SpatiaLite
 Finding SpatiaLite
 ------------------
 
-.. autofunction:: sqlite_utils.utils.find_spatialite
+.. autofunction:: duckdb_utils.utils.find_spatialite
 
 .. _python_api_gis_add_geometry_column:
 
 Adding geometry columns
 -----------------------
 
-.. automethod:: sqlite_utils.db.Table.add_geometry_column
+.. automethod:: duckdb_utils.duckdb.Table.add_geometry_column
    :noindex:
 
 .. _python_api_gis_create_spatial_index:
@@ -2886,5 +2886,5 @@ Adding geometry columns
 Creating a spatial index
 ------------------------
 
-.. automethod:: sqlite_utils.db.Table.create_spatial_index
+.. automethod:: duckdb_utils.duckdb.Table.create_spatial_index
    :noindex:

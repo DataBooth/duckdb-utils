@@ -1,5 +1,5 @@
-from sqlite_utils import recipes
-from sqlite_utils.utils import sqlite3
+from duckdb_utils import recipes
+from duckdb_utils.utils import duckdb
 import json
 import pytest
 
@@ -73,7 +73,7 @@ def test_dateparse_errors(fresh_db, fn, errors):
     )
     if errors is None:
         # Should raise an error
-        with pytest.raises(sqlite3.OperationalError):
+        with pytest.raises(duckdb.OperationalError):
             fresh_db["example"].convert("dt", lambda value: getattr(recipes, fn)(value))
     else:
         fresh_db["example"].convert(

@@ -1,5 +1,5 @@
 import pytest
-from sqlite_utils.utils import column_affinity
+from duckdb_utils.utils import column_affinity
 
 EXAMPLES = [
     # Examples from https://www.sqlite.org/datatype3.html#affinity_name_examples

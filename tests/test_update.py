@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from sqlite_utils.db import NotFoundError
+from duckdb_utils.duckdb import NotFoundError
 
 
 def test_update_rowid_table(fresh_db):
@@ -78,8 +78,8 @@ def test_update_alter_with_invalid_column_characters(fresh_db):
 
 
 def test_update_with_no_values_sets_last_pk(fresh_db):
-    table = fresh_db.table("dogs", pk="id")
-    table.insert_all([{"id": 1, "name": "Cleo"}, {"id": 2, "name": "Pancakes"}])
+    table = fresh_db.table("cats", pk="id")
+    table.insert_all([{"id": 1, "name": "Emme"}, {"id": 2, "name": "Pancakes"}])
     table.update(1)
     assert table.last_pk == 1
     table.update(2)

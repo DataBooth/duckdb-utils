@@ -2,9 +2,9 @@ import json
 import pytest
 
 from click.testing import CliRunner
-from sqlite_utils.cli import cli
-from sqlite_utils.db import Database
-from sqlite_utils.utils import find_spatialite, sqlite3
+from duckdb_utils.cli import cli
+from duckdb_utils.duckdb import Database
+from duckdb_utils.utils import find_spatialite, duckdb
 
 try:
     import sqlean
@@ -17,8 +17,8 @@ pytestmark = [
         not find_spatialite(), reason="Could not find SpatiaLite extension"
     ),
     pytest.mark.skipif(
-        not hasattr(sqlite3.Connection, "enable_load_extension"),
-        reason="sqlite3.Connection missing enable_load_extension",
+        not hasattr(duckdb.connection, "enable_load_extension"),
+        reason="duckdb.connection missing enable_load_extension",
     ),
     pytest.mark.skipif(
         sqlean is not None, reason="sqlean.py is not compatible with SpatiaLite"
@@ -121,15 +121,15 @@ def test_query_load_extension(use_spatialite_shortcut):
 
 
 def test_cli_create_spatialite(tmpdir):
-    # sqlite-utils create test.db --init-spatialite
-    db_path = tmpdir / "created.db"
+    # duckdb-utils create test.duckdb --init-spatialite
+    db_path = tmpdir / "created.duckdb"
     result = CliRunner().invoke(
         cli, ["create-database", str(db_path), "--init-spatialite"]
     )
 
     assert result.exit_code == 0
     assert db_path.exists()
-    assert db_path.read_binary()[:16] == b"SQLite format 3\x00"
+    assert db_path.read_binary()[:16] == b"DuckDB format 3\x00"
 
     db = Database(str(db_path))
     assert "spatial_ref_sys" in db.table_names()
@@ -137,7 +137,7 @@ def test_cli_create_spatialite(tmpdir):
 
 def test_cli_add_geometry_column(tmpdir):
     # create a rowid table with one column
-    db_path = tmpdir / "spatial.db"
+    db_path = tmpdir / "spatial.duckdb"
     db = Database(str(db_path))
     db.init_spatialite()
 
@@ -169,7 +169,7 @@ def test_cli_add_geometry_column(tmpdir):
 
 def test_cli_add_geometry_column_options(tmpdir):
     # create a rowid table with one column
-    db_path = tmpdir / "spatial.db"
+    db_path = tmpdir / "spatial.duckdb"
     db = Database(str(db_path))
     db.init_spatialite()
     table = db["locations"].create({"name": str})
@@ -206,7 +206,7 @@ def test_cli_add_geometry_column_options(tmpdir):
 
 def test_cli_add_geometry_column_invalid_type(tmpdir):
     # create a rowid table with one column
-    db_path = tmpdir / "spatial.db"
+    db_path = tmpdir / "spatial.duckdb"
     db = Database(str(db_path))
     db.init_spatialite()
 
@@ -229,7 +229,7 @@ def test_cli_add_geometry_column_invalid_type(tmpdir):
 
 def test_cli_create_spatial_index(tmpdir):
     # create a rowid table with one column
-    db_path = tmpdir / "spatial.db"
+    db_path = tmpdir / "spatial.duckdb"
     db = Database(str(db_path))
     db.init_spatialite()
 

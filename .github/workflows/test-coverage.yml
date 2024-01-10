@@ -25,7 +25,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
     - name: Install SpatiaLite
-      run: sudo apt-get install libsqlite3-mod-spatialite
+      run: sudo apt-get install libduckdb-mod-spatialite
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
@@ -34,7 +34,7 @@ jobs:
     - name: Run tests
       run: |-
         ls -lah
-        pytest --cov=sqlite_utils --cov-report xml:coverage.xml --cov-report term
+        pytest --cov=duckdb_utils --cov-report xml:coverage.xml --cov-report term
         ls -lah
     - name: Upload coverage report
       uses: codecov/codecov-action@v1

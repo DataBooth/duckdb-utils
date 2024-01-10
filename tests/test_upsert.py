@@ -1,21 +1,21 @@
-from sqlite_utils.db import PrimaryKeyRequired
+from duckdb_utils.duckdb import PrimaryKeyRequired
 import pytest
 
 
 def test_upsert(fresh_db):
     table = fresh_db["table"]
-    table.insert({"id": 1, "name": "Cleo"}, pk="id")
+    table.insert({"id": 1, "name": "Emme"}, pk="id")
     table.upsert({"id": 1, "age": 5}, pk="id", alter=True)
-    assert list(table.rows) == [{"id": 1, "name": "Cleo", "age": 5}]
+    assert list(table.rows) == [{"id": 1, "name": "Emme", "age": 5}]
     assert table.last_pk == 1
 
 
 def test_upsert_all(fresh_db):
     table = fresh_db["table"]
-    table.upsert_all([{"id": 1, "name": "Cleo"}, {"id": 2, "name": "Nixie"}], pk="id")
+    table.upsert_all([{"id": 1, "name": "Emme"}, {"id": 2, "name": "Nixie"}], pk="id")
     table.upsert_all([{"id": 1, "age": 5}, {"id": 2, "age": 5}], pk="id", alter=True)
     assert list(table.rows) == [
-        {"id": 1, "name": "Cleo", "age": 5},
+        {"id": 1, "name": "Emme", "age": 5},
         {"id": 2, "name": "Nixie", "age": 5},
     ]
     assert table.last_pk is None
@@ -23,27 +23,27 @@ def test_upsert_all(fresh_db):
 
 def test_upsert_all_single_column(fresh_db):
     table = fresh_db["table"]
-    table.upsert_all([{"name": "Cleo"}], pk="name")
-    assert list(table.rows) == [{"name": "Cleo"}]
+    table.upsert_all([{"name": "Emme"}], pk="name")
+    assert list(table.rows) == [{"name": "Emme"}]
     assert table.pks == ["name"]
 
 
 def test_upsert_all_not_null(fresh_db):
-    # https://github.com/simonw/sqlite-utils/issues/538
+    # https://github.com/databooth/duckdb-utils/issues/538
     fresh_db["comments"].upsert_all(
-        [{"id": 1, "name": "Cleo"}],
+        [{"id": 1, "name": "Emme"}],
         pk="id",
         not_null=["name"],
     )
-    assert list(fresh_db["comments"].rows) == [{"id": 1, "name": "Cleo"}]
+    assert list(fresh_db["comments"].rows) == [{"id": 1, "name": "Emme"}]
 
 
 def test_upsert_error_if_no_pk(fresh_db):
     table = fresh_db["table"]
     with pytest.raises(PrimaryKeyRequired):
-        table.upsert_all([{"id": 1, "name": "Cleo"}])
+        table.upsert_all([{"id": 1, "name": "Emme"}])
     with pytest.raises(PrimaryKeyRequired):
-        table.upsert({"id": 1, "name": "Cleo"})
+        table.upsert({"id": 1, "name": "Emme"})
 
 
 def test_upsert_with_hash_id(fresh_db):
@@ -83,7 +83,7 @@ def test_upsert_compound_primary_key(fresh_db):
     table = fresh_db["table"]
     table.upsert_all(
         [
-            {"species": "dog", "id": 1, "name": "Cleo", "age": 4},
+            {"species": "dog", "id": 1, "name": "Emme", "age": 4},
             {"species": "cat", "id": 1, "name": "Catbag"},
         ],
         pk=("species", "id"),
@@ -92,7 +92,7 @@ def test_upsert_compound_primary_key(fresh_db):
     table.upsert({"species": "dog", "id": 1, "age": 5}, pk=("species", "id"))
     assert ("dog", 1) == table.last_pk
     assert [
-        {"species": "dog", "id": 1, "name": "Cleo", "age": 5},
+        {"species": "dog", "id": 1, "name": "Emme", "age": 5},
         {"species": "cat", "id": 1, "name": "Catbag", "age": None},
     ] == list(table.rows)
     # .upsert_all() with a single item should set .last_pk

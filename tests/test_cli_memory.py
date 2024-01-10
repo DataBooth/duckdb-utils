@@ -3,7 +3,7 @@ import json
 import pytest
 from click.testing import CliRunner
 
-from sqlite_utils import Database, cli
+from duckdb_utils import Database, cli
 
 
 def test_memory_basic():
@@ -15,7 +15,7 @@ def test_memory_basic():
 @pytest.mark.parametrize("sql_from", ("test", "t", "t1"))
 @pytest.mark.parametrize("use_stdin", (True, False))
 def test_memory_csv(tmpdir, sql_from, use_stdin):
-    content = "id,name\n1,Cleo\n2,Bants"
+    content = "id,name\n1,Emme\n2,Bants"
     input = None
     if use_stdin:
         input = content
@@ -33,24 +33,24 @@ def test_memory_csv(tmpdir, sql_from, use_stdin):
     )
     assert result.exit_code == 0
     assert (
-        result.output.strip() == '{"id": 1, "name": "Cleo"}\n{"id": 2, "name": "Bants"}'
+        result.output.strip() == '{"id": 1, "name": "Emme"}\n{"id": 2, "name": "Bants"}'
     )
 
 
 @pytest.mark.parametrize("use_stdin", (True, False))
 def test_memory_tsv(tmpdir, use_stdin):
-    data = "id\tname\n1\tCleo\n2\tBants"
+    data = "id\tname\n1\tEmme\n2\tBants"
     if use_stdin:
         input = data
         path = "stdin:tsv"
         sql_from = "stdin"
     else:
         input = None
-        path = str(tmpdir / "chickens.tsv")
+        path = str(tmpdir / "seagulls.tsv")
         with open(path, "w") as fp:
             fp.write(data)
         path = path + ":tsv"
-        sql_from = "chickens"
+        sql_from = "seagulls"
     result = CliRunner().invoke(
         cli.cli,
         ["memory", path, "select * from {}".format(sql_from)],
@@ -58,7 +58,7 @@ def test_memory_tsv(tmpdir, use_stdin):
     )
     assert result.exit_code == 0, result.output
     assert json.loads(result.output.strip()) == [
-        {"id": 1, "name": "Cleo"},
+        {"id": 1, "name": "Emme"},
         {"id": 2, "name": "Bants"},
     ]
 
@@ -72,11 +72,11 @@ def test_memory_json(tmpdir, use_stdin):
         sql_from = "stdin"
     else:
         input = None
-        path = str(tmpdir / "chickens.json")
+        path = str(tmpdir / "seagulls.json")
         with open(path, "w") as fp:
             fp.write(data)
         path = path + ":json"
-        sql_from = "chickens"
+        sql_from = "seagulls"
     result = CliRunner().invoke(
         cli.cli,
         ["memory", path, "select * from {}".format(sql_from)],
@@ -98,11 +98,11 @@ def test_memory_json_nl(tmpdir, use_stdin):
         sql_from = "stdin"
     else:
         input = None
-        path = str(tmpdir / "chickens.json")
+        path = str(tmpdir / "seagulls.json")
         with open(path, "w") as fp:
             fp.write(data)
         path = path + ":nl"
-        sql_from = "chickens"
+        sql_from = "seagulls"
     result = CliRunner().invoke(
         cli.cli,
         ["memory", path, "select * from {}".format(sql_from)],
@@ -161,7 +161,7 @@ def test_memory_dump(extra_args):
     result = CliRunner().invoke(
         cli.cli,
         ["memory", "-"] + extra_args + ["--dump"],
-        input="id,name\n1,Cleo\n2,Bants",
+        input="id,name\n1,Emme\n2,Bants",
     )
     assert result.exit_code == 0
     expected = (
@@ -170,7 +170,7 @@ def test_memory_dump(extra_args):
         "   [id] INTEGER,\n"
         "   [name] TEXT\n"
         ");\n"
-        "INSERT INTO \"stdin\" VALUES(1,'Cleo');\n"
+        "INSERT INTO \"stdin\" VALUES(1,'Emme');\n"
         "INSERT INTO \"stdin\" VALUES(2,'Bants');\n"
         "CREATE VIEW t1 AS select * from [stdin];\n"
         "CREATE VIEW t AS select * from [stdin];\n"
@@ -186,7 +186,7 @@ def test_memory_schema(extra_args):
     result = CliRunner().invoke(
         cli.cli,
         ["memory", "-"] + extra_args + ["--schema"],
-        input="id,name\n1,Cleo\n2,Bants",
+        input="id,name\n1,Emme\n2,Bants",
     )
     assert result.exit_code == 0
     assert result.output.strip() == (
@@ -201,16 +201,16 @@ def test_memory_schema(extra_args):
 
 @pytest.mark.parametrize("extra_args", ([], ["select 1"]))
 def test_memory_save(tmpdir, extra_args):
-    save_to = str(tmpdir / "save.db")
+    save_to = str(tmpdir / "save.duckdb")
     result = CliRunner().invoke(
         cli.cli,
         ["memory", "-"] + extra_args + ["--save", save_to],
-        input="id,name\n1,Cleo\n2,Bants",
+        input="id,name\n1,Emme\n2,Bants",
     )
     assert result.exit_code == 0
     db = Database(save_to)
     assert list(db["stdin"].rows) == [
-        {"id": 1, "name": "Cleo"},
+        {"id": 1, "name": "Emme"},
         {"id": 2, "name": "Bants"},
     ]
 
@@ -220,11 +220,11 @@ def test_memory_no_detect_types(option):
     result = CliRunner().invoke(
         cli.cli,
         ["memory", "-", "select * from stdin"] + [option],
-        input="id,name,weight\n1,Cleo,45.5\n2,Bants,3.5",
+        input="id,name,weight\n1,Emme,45.5\n2,Bants,3.5",
     )
     assert result.exit_code == 0, result.output
     assert json.loads(result.output.strip()) == [
-        {"id": "1", "name": "Cleo", "weight": "45.5"},
+        {"id": "1", "name": "Emme", "weight": "45.5"},
         {"id": "2", "name": "Bants", "weight": "3.5"},
     ]
 
@@ -257,7 +257,7 @@ def test_memory_analyze():
     result = CliRunner().invoke(
         cli.cli,
         ["memory", "-", "--analyze"],
-        input="id,name\n1,Cleo\n2,Bants",
+        input="id,name\n1,Emme\n2,Bants",
     )
     assert result.exit_code == 0
     assert result.output == (
@@ -279,7 +279,7 @@ def test_memory_two_files_with_same_stem(tmpdir):
     (tmpdir / "two").mkdir()
     one = tmpdir / "one" / "data.csv"
     two = tmpdir / "two" / "data.csv"
-    one.write_text("id,name\n1,Cleo\n2,Bants", encoding="utf-8")
+    one.write_text("id,name\n1,Emme\n2,Bants", encoding="utf-8")
     two.write_text("id,name\n3,Blue\n4,Lila", encoding="utf-8")
     result = CliRunner().invoke(cli.cli, ["memory", str(one), str(two), "", "--schema"])
     assert result.exit_code == 0

@@ -1,5 +1,5 @@
-from sqlite_utils import Database
-from sqlite_utils.utils import sqlite3
+from duckdb_utils import Database
+from duckdb_utils.utils import duckdb
 import pytest
 
 CREATE_TABLES = """
@@ -35,7 +35,7 @@ def existing_db():
 
 @pytest.fixture
 def db_path(tmpdir):
-    path = str(tmpdir / "test.db")
-    db = sqlite3.connect(path)
+    path = str(tmpdir / "test.duckdb")
+    db = duckdb.connect(path)
     db.executescript(CREATE_TABLES)
     return path

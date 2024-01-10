@@ -1,5 +1,5 @@
-from sqlite_utils import Database
-from sqlite_utils import cli
+from duckdb_utils import Database
+from duckdb_utils import cli
 from click.testing import CliRunner
 import pytest
 
@@ -59,8 +59,8 @@ def test_enable_counts_specific_table(fresh_db):
 def test_enable_counts_all_tables(fresh_db):
     foo = fresh_db["foo"]
     bar = fresh_db["bar"]
-    foo.insert({"name": "Cleo"})
-    bar.insert({"name": "Cleo"})
+    foo.insert({"name": "Emme"})
+    bar.insert({"name": "Emme"})
     foo.enable_fts(["name"])
     fresh_db.enable_counts()
     assert set(fresh_db.table_names()) == {
@@ -85,7 +85,7 @@ def test_enable_counts_all_tables(fresh_db):
 
 @pytest.fixture
 def counts_db_path(tmpdir):
-    path = str(tmpdir / "test.db")
+    path = str(tmpdir / "test.duckdb")
     db = Database(path)
     db["foo"].insert({"name": "bar"})
     db["bar"].insert({"name": "bar"})
@@ -131,7 +131,7 @@ def test_uses_counts_after_enable_counts(counts_db_path):
     with db.tracer(lambda sql, parameters: logged.append((sql, parameters))):
         assert db["foo"].count == 1
         assert logged == [
-            ("select name from sqlite_master where type = 'view'", None),
+            ("select name from duckdb_master where type = 'view'", None),
             ("select count(*) from [foo]", []),
         ]
         logged.clear()
@@ -144,19 +144,19 @@ def test_uses_counts_after_enable_counts(counts_db_path):
             "CREATE TABLE IF NOT EXISTS [_counts](\n   [table] TEXT PRIMARY KEY,\n   count INTEGER DEFAULT 0\n);",
             None,
         ),
-        ("select name from sqlite_master where type = 'table'", None),
-        ("select name from sqlite_master where type = 'view'", None),
-        ("select name from sqlite_master where type = 'view'", None),
-        ("select name from sqlite_master where type = 'view'", None),
-        ("select name from sqlite_master where type = 'view'", None),
-        ("select sql from sqlite_master where name = ?", ("foo",)),
+        ("select name from duckdb_master where type = 'table'", None),
+        ("select name from duckdb_master where type = 'view'", None),
+        ("select name from duckdb_master where type = 'view'", None),
+        ("select name from duckdb_master where type = 'view'", None),
+        ("select name from duckdb_master where type = 'view'", None),
+        ("select sql from duckdb_master where name = ?", ("foo",)),
         ("SELECT quote(:value)", {"value": "foo"}),
-        ("select sql from sqlite_master where name = ?", ("bar",)),
+        ("select sql from duckdb_master where name = ?", ("bar",)),
         ("SELECT quote(:value)", {"value": "bar"}),
-        ("select sql from sqlite_master where name = ?", ("baz",)),
+        ("select sql from duckdb_master where name = ?", ("baz",)),
         ("SELECT quote(:value)", {"value": "baz"}),
-        ("select sql from sqlite_master where name = ?", ("_counts",)),
-        ("select name from sqlite_master where type = 'view'", None),
+        ("select sql from duckdb_master where name = ?", ("_counts",)),
+        ("select name from duckdb_master where type = 'view'", None),
         ("select [table], count from _counts where [table] in (?)", ["foo"]),
     ]
 

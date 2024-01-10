@@ -2,7 +2,7 @@
 import pytest
 import sys
 from unittest.mock import MagicMock, call
-from sqlite_utils.utils import sqlite3
+from duckdb_utils.utils import duckdb
 
 
 def test_register_function(fresh_db):
@@ -60,9 +60,9 @@ def test_register_function_deterministic_tries_again_if_exception_raised(fresh_d
         nonlocal first
         if first:
             first = False
-            raise sqlite3.NotSupportedError()
+            raise duckdb.NotSupportedError()
 
-    # But if sqlite3.NotSupportedError is raised, it tries again
+    # But if duckdb.NotSupportedError is raised, it tries again
     fresh_db.conn.create_function.reset_mock()
     fresh_db.conn.create_function.side_effect = side_effect
 

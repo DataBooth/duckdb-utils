@@ -1,12 +1,12 @@
 from hypothesis import given
 import hypothesis.strategies as st
-import sqlite_utils
+import duckdb_utils
 
 
-# SQLite integers are -(2^63) to 2^63 - 1
+# DuckDB integers are -(2^63) to 2^63 - 1
 @given(st.integers(-9223372036854775808, 9223372036854775807))
 def test_roundtrip_integers(integer):
-    db = sqlite_utils.Database(memory=True)
+    db = duckdb_utils.Database(memory=True)
     row = {
         "integer": integer,
     }
@@ -16,7 +16,7 @@ def test_roundtrip_integers(integer):
 
 @given(st.text())
 def test_roundtrip_text(text):
-    db = sqlite_utils.Database(memory=True)
+    db = duckdb_utils.Database(memory=True)
     row = {
         "text": text,
     }
@@ -26,7 +26,7 @@ def test_roundtrip_text(text):
 
 @given(st.binary(max_size=1024 * 1024))
 def test_roundtrip_binary(binary):
-    db = sqlite_utils.Database(memory=True)
+    db = duckdb_utils.Database(memory=True)
     row = {
         "binary": binary,
     }
@@ -36,7 +36,7 @@ def test_roundtrip_binary(binary):
 
 @given(st.floats(allow_nan=False))
 def test_roundtrip_floats(floats):
-    db = sqlite_utils.Database(memory=True)
+    db = duckdb_utils.Database(memory=True)
     row = {
         "floats": floats,
     }

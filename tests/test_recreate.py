@@ -1,5 +1,5 @@
-from sqlite_utils import Database
-import sqlite3
+from duckdb_utils import Database
+import duckdb
 import pathlib
 import pytest
 
@@ -13,7 +13,7 @@ def test_recreate_ignored_for_in_memory():
 
 
 def test_recreate_not_allowed_for_connection():
-    conn = sqlite3.connect(":memory:")
+    conn = duckdb.connect(":memory:")
     with pytest.raises(AssertionError):
         Database(conn, recreate=True)
 
@@ -23,7 +23,7 @@ def test_recreate_not_allowed_for_connection():
     [(True, True), (True, False), (False, True), (False, False)],
 )
 def test_recreate(tmp_path, use_path, create_file_first):
-    filepath = str(tmp_path / "data.db")
+    filepath = str(tmp_path / "data.duckdb")
     if use_path:
         filepath = pathlib.Path(filepath)
     if create_file_first:

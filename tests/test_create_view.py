@@ -1,5 +1,5 @@
 import pytest
-from sqlite_utils.utils import OperationalError
+from duckdb_utils.utils import OperationalError
 
 
 def test_create_view(fresh_db):

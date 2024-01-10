@@ -1,4 +1,4 @@
-from sqlite_utils.db import BadMultiValues
+from duckdb_utils.duckdb import BadMultiValues
 import pytest
 
 

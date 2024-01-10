@@ -1,4 +1,4 @@
-from sqlite_utils import cli, Database
+from duckdb_utils import cli, Database
 from click.testing import CliRunner
 import json
 import pytest
@@ -9,38 +9,38 @@ import time
 
 def test_insert_simple(tmpdir):
     json_path = str(tmpdir / "dog.json")
-    db_path = str(tmpdir / "dogs.db")
+    db_path = str(tmpdir / "cats.duckdb")
     with open(json_path, "w") as fp:
-        fp.write(json.dumps({"name": "Cleo", "age": 4}))
-    result = CliRunner().invoke(cli.cli, ["insert", db_path, "dogs", json_path])
+        fp.write(json.dumps({"name": "Emme", "age": 4}))
+    result = CliRunner().invoke(cli.cli, ["insert", db_path, "cats", json_path])
     assert result.exit_code == 0
-    assert [{"age": 4, "name": "Cleo"}] == list(
-        Database(db_path).query("select * from dogs")
+    assert [{"age": 4, "name": "Emme"}] == list(
+        Database(db_path).query("select * from cats")
     )
     db = Database(db_path)
-    assert ["dogs"] == db.table_names()
-    assert [] == db["dogs"].indexes
+    assert ["cats"] == db.table_names()
+    assert [] == db["cats"].indexes
 
 
 def test_insert_from_stdin(tmpdir):
-    db_path = str(tmpdir / "dogs.db")
+    db_path = str(tmpdir / "cats.duckdb")
     result = CliRunner().invoke(
         cli.cli,
-        ["insert", db_path, "dogs", "-"],
-        input=json.dumps({"name": "Cleo", "age": 4}),
+        ["insert", db_path, "cats", "-"],
+        input=json.dumps({"name": "Emme", "age": 4}),
     )
     assert result.exit_code == 0
-    assert [{"age": 4, "name": "Cleo"}] == list(
-        Database(db_path).query("select * from dogs")
+    assert [{"age": 4, "name": "Emme"}] == list(
+        Database(db_path).query("select * from cats")
     )
 
 
 def test_insert_invalid_json_error(tmpdir):
-    db_path = str(tmpdir / "dogs.db")
+    db_path = str(tmpdir / "cats.duckdb")
     result = CliRunner().invoke(
         cli.cli,
-        ["insert", db_path, "dogs", "-"],
-        input="name,age\nCleo,4",
+        ["insert", db_path, "cats", "-"],
+        input="name,age\nEmme,4",
     )
     assert result.exit_code == 1
     assert result.output == (
@@ -50,7 +50,7 @@ def test_insert_invalid_json_error(tmpdir):
 
 
 def test_insert_json_flatten(tmpdir):
-    db_path = str(tmpdir / "flat.db")
+    db_path = str(tmpdir / "flat.duckdb")
     result = CliRunner().invoke(
         cli.cli,
         ["insert", db_path, "items", "-", "--flatten"],
@@ -61,7 +61,7 @@ def test_insert_json_flatten(tmpdir):
 
 
 def test_insert_json_flatten_nl(tmpdir):
-    db_path = str(tmpdir / "flat.db")
+    db_path = str(tmpdir / "flat.duckdb")
     result = CliRunner().invoke(
         cli.cli,
         ["insert", db_path, "items", "-", "--flatten", "--nl"],
@@ -80,81 +80,81 @@ def test_insert_json_flatten_nl(tmpdir):
 def test_insert_with_primary_key(db_path, tmpdir):
     json_path = str(tmpdir / "dog.json")
     with open(json_path, "w") as fp:
-        fp.write(json.dumps({"id": 1, "name": "Cleo", "age": 4}))
+        fp.write(json.dumps({"id": 1, "name": "Emme", "age": 4}))
     result = CliRunner().invoke(
-        cli.cli, ["insert", db_path, "dogs", json_path, "--pk", "id"]
+        cli.cli, ["insert", db_path, "cats", json_path, "--pk", "id"]
     )
     assert result.exit_code == 0
-    assert [{"id": 1, "age": 4, "name": "Cleo"}] == list(
-        Database(db_path).query("select * from dogs")
+    assert [{"id": 1, "age": 4, "name": "Emme"}] == list(
+        Database(db_path).query("select * from cats")
     )
     db = Database(db_path)
-    assert ["id"] == db["dogs"].pks
+    assert ["id"] == db["cats"].pks
 
 
 def test_insert_multiple_with_primary_key(db_path, tmpdir):
-    json_path = str(tmpdir / "dogs.json")
-    dogs = [{"id": i, "name": "Cleo {}".format(i), "age": i + 3} for i in range(1, 21)]
+    json_path = str(tmpdir / "cats.json")
+    cats = [{"id": i, "name": "Emme {}".format(i), "age": i + 3} for i in range(1, 21)]
     with open(json_path, "w") as fp:
-        fp.write(json.dumps(dogs))
+        fp.write(json.dumps(cats))
     result = CliRunner().invoke(
-        cli.cli, ["insert", db_path, "dogs", json_path, "--pk", "id"]
+        cli.cli, ["insert", db_path, "cats", json_path, "--pk", "id"]
     )
     assert result.exit_code == 0
     db = Database(db_path)
-    assert dogs == list(db.query("select * from dogs order by id"))
-    assert ["id"] == db["dogs"].pks
+    assert cats == list(db.query("select * from cats order by id"))
+    assert ["id"] == db["cats"].pks
 
 
 def test_insert_multiple_with_compound_primary_key(db_path, tmpdir):
-    json_path = str(tmpdir / "dogs.json")
-    dogs = [
-        {"breed": "mixed", "id": i, "name": "Cleo {}".format(i), "age": i + 3}
+    json_path = str(tmpdir / "cats.json")
+    cats = [
+        {"breed": "mixed", "id": i, "name": "Emme {}".format(i), "age": i + 3}
         for i in range(1, 21)
     ]
     with open(json_path, "w") as fp:
-        fp.write(json.dumps(dogs))
+        fp.write(json.dumps(cats))
     result = CliRunner().invoke(
-        cli.cli, ["insert", db_path, "dogs", json_path, "--pk", "id", "--pk", "breed"]
+        cli.cli, ["insert", db_path, "cats", json_path, "--pk", "id", "--pk", "breed"]
     )
     assert result.exit_code == 0
     db = Database(db_path)
-    assert dogs == list(db.query("select * from dogs order by breed, id"))
-    assert {"breed", "id"} == set(db["dogs"].pks)
+    assert cats == list(db.query("select * from cats order by breed, id"))
+    assert {"breed", "id"} == set(db["cats"].pks)
     assert (
-        "CREATE TABLE [dogs] (\n"
+        "CREATE TABLE [cats] (\n"
         "   [breed] TEXT,\n"
         "   [id] INTEGER,\n"
         "   [name] TEXT,\n"
         "   [age] INTEGER,\n"
         "   PRIMARY KEY ([id], [breed])\n"
         ")"
-    ) == db["dogs"].schema
+    ) == db["cats"].schema
 
 
 def test_insert_not_null_default(db_path, tmpdir):
-    json_path = str(tmpdir / "dogs.json")
-    dogs = [
-        {"id": i, "name": "Cleo {}".format(i), "age": i + 3, "score": 10}
+    json_path = str(tmpdir / "cats.json")
+    cats = [
+        {"id": i, "name": "Emme {}".format(i), "age": i + 3, "score": 10}
         for i in range(1, 21)
     ]
     with open(json_path, "w") as fp:
-        fp.write(json.dumps(dogs))
+        fp.write(json.dumps(cats))
     result = CliRunner().invoke(
         cli.cli,
-        ["insert", db_path, "dogs", json_path, "--pk", "id"]
+        ["insert", db_path, "cats", json_path, "--pk", "id"]
         + ["--not-null", "name", "--not-null", "age"]
         + ["--default", "score", "5", "--default", "age", "1"],
     )
     assert result.exit_code == 0
     db = Database(db_path)
     assert (
-        "CREATE TABLE [dogs] (\n"
+        "CREATE TABLE [cats] (\n"
         "   [id] INTEGER PRIMARY KEY,\n"
         "   [name] TEXT NOT NULL,\n"
         "   [age] INTEGER NOT NULL DEFAULT '1',\n"
         "   [score] INTEGER DEFAULT '5'\n)"
-    ) == db["dogs"].schema
+    ) == db["cats"].schema
 
 
 def test_insert_binary_base64(db_path):
@@ -185,22 +185,22 @@ def test_insert_newline_delimited(db_path):
 
 def test_insert_ignore(db_path, tmpdir):
     db = Database(db_path)
-    db["dogs"].insert({"id": 1, "name": "Cleo"}, pk="id")
-    json_path = str(tmpdir / "dogs.json")
+    db["cats"].insert({"id": 1, "name": "Emme"}, pk="id")
+    json_path = str(tmpdir / "cats.json")
     with open(json_path, "w") as fp:
         fp.write(json.dumps([{"id": 1, "name": "Bailey"}]))
     # Should raise error without --ignore
     result = CliRunner().invoke(
-        cli.cli, ["insert", db_path, "dogs", json_path, "--pk", "id"]
+        cli.cli, ["insert", db_path, "cats", json_path, "--pk", "id"]
     )
     assert result.exit_code != 0, result.output
     # If we use --ignore it should run OK
     result = CliRunner().invoke(
-        cli.cli, ["insert", db_path, "dogs", json_path, "--pk", "id", "--ignore"]
+        cli.cli, ["insert", db_path, "cats", json_path, "--pk", "id", "--ignore"]
     )
     assert result.exit_code == 0, result.output
     # ... but it should actually have no effect
-    assert [{"id": 1, "name": "Cleo"}] == list(db.query("select * from dogs"))
+    assert [{"id": 1, "name": "Emme"}] == list(db.query("select * from cats"))
 
 
 @pytest.mark.parametrize(
@@ -260,7 +260,7 @@ def test_insert_csv_empty_null(db_path, empty_null):
     ),
 )
 def test_insert_stop_after(tmpdir, input, args):
-    db_path = str(tmpdir / "data.db")
+    db_path = str(tmpdir / "data.duckdb")
     result = CliRunner().invoke(
         cli.cli,
         ["insert", db_path, "rows", "-", "--stop-after", "2"] + args,
@@ -296,22 +296,22 @@ def test_insert_replace(db_path, tmpdir):
     test_insert_multiple_with_primary_key(db_path, tmpdir)
     json_path = str(tmpdir / "insert-replace.json")
     db = Database(db_path)
-    assert db["dogs"].count == 20
-    insert_replace_dogs = [
+    assert db["cats"].count == 20
+    insert_replace_cats = [
         {"id": 1, "name": "Insert replaced 1", "age": 4},
         {"id": 2, "name": "Insert replaced 2", "age": 4},
         {"id": 21, "name": "Fresh insert 21", "age": 6},
     ]
     with open(json_path, "w") as fp:
-        fp.write(json.dumps(insert_replace_dogs))
+        fp.write(json.dumps(insert_replace_cats))
     result = CliRunner().invoke(
-        cli.cli, ["insert", db_path, "dogs", json_path, "--pk", "id", "--replace"]
+        cli.cli, ["insert", db_path, "cats", json_path, "--pk", "id", "--replace"]
     )
     assert result.exit_code == 0, result.output
-    assert db["dogs"].count == 21
+    assert db["cats"].count == 21
     assert (
-        list(db.query("select * from dogs where id in (1, 2, 21) order by id"))
-        == insert_replace_dogs
+        list(db.query("select * from cats where id in (1, 2, 21) order by id"))
+        == insert_replace_cats
     )
 
 
@@ -383,14 +383,14 @@ def test_insert_analyze(db_path):
     db = Database(db_path)
     db["rows"].insert({"foo": "x", "n": 3})
     db["rows"].create_index(["n"])
-    assert "sqlite_stat1" not in db.table_names()
+    assert "duckdb_stat1" not in db.table_names()
     result = CliRunner().invoke(
         cli.cli,
         ["insert", db_path, "rows", "-", "--nl", "--analyze"],
         input='{"foo": "bar", "n": 1}\n{"foo": "baz", "n": 2}',
     )
     assert result.exit_code == 0, result.output
-    assert "sqlite_stat1" in db.table_names()
+    assert "duckdb_stat1" in db.table_names()
 
 
 def test_insert_lines(db_path):
@@ -551,7 +551,7 @@ def test_insert_convert_error_messages(db_path, options, expected_error):
 
 
 def test_insert_streaming_batch_size_1(db_path):
-    # https://github.com/simonw/sqlite-utils/issues/364
+    # https://github.com/databooth/duckdb-utils/issues/364
     # Streaming with --batch-size 1 should commit on each record
     # Can't use CliRunner().invoke() here bacuse we need to
     # run assertions in between writing to process stdin
@@ -559,7 +559,7 @@ def test_insert_streaming_batch_size_1(db_path):
         [
             sys.executable,
             "-m",
-            "sqlite_utils",
+            "duckdb_utils",
             "insert",
             db_path,
             "rows",

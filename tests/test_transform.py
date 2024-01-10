@@ -1,5 +1,5 @@
-from sqlite_utils.db import ForeignKey
-from sqlite_utils.utils import OperationalError
+from duckdb_utils.duckdb import ForeignKey
+from duckdb_utils.utils import OperationalError
 import pytest
 
 
@@ -10,90 +10,90 @@ import pytest
         (
             {},
             [
-                "CREATE TABLE [dogs_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] TEXT\n);",
-                "INSERT INTO [dogs_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [dogs];",
-                "DROP TABLE [dogs];",
-                "ALTER TABLE [dogs_new_suffix] RENAME TO [dogs];",
+                "CREATE TABLE [cats_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] TEXT\n);",
+                "INSERT INTO [cats_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [cats];",
+                "DROP TABLE [cats];",
+                "ALTER TABLE [cats_new_suffix] RENAME TO [cats];",
             ],
         ),
         # Change column type
         (
             {"types": {"age": int}},
             [
-                "CREATE TABLE [dogs_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] INTEGER\n);",
-                "INSERT INTO [dogs_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [dogs];",
-                "DROP TABLE [dogs];",
-                "ALTER TABLE [dogs_new_suffix] RENAME TO [dogs];",
+                "CREATE TABLE [cats_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] INTEGER\n);",
+                "INSERT INTO [cats_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [cats];",
+                "DROP TABLE [cats];",
+                "ALTER TABLE [cats_new_suffix] RENAME TO [cats];",
             ],
         ),
         # Rename a column
         (
             {"rename": {"age": "dog_age"}},
             [
-                "CREATE TABLE [dogs_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [dog_age] TEXT\n);",
-                "INSERT INTO [dogs_new_suffix] ([rowid], [id], [name], [dog_age])\n   SELECT [rowid], [id], [name], [age] FROM [dogs];",
-                "DROP TABLE [dogs];",
-                "ALTER TABLE [dogs_new_suffix] RENAME TO [dogs];",
+                "CREATE TABLE [cats_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [dog_age] TEXT\n);",
+                "INSERT INTO [cats_new_suffix] ([rowid], [id], [name], [dog_age])\n   SELECT [rowid], [id], [name], [age] FROM [cats];",
+                "DROP TABLE [cats];",
+                "ALTER TABLE [cats_new_suffix] RENAME TO [cats];",
             ],
         ),
         # Drop a column
         (
             {"drop": ["age"]},
             [
-                "CREATE TABLE [dogs_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT\n);",
-                "INSERT INTO [dogs_new_suffix] ([rowid], [id], [name])\n   SELECT [rowid], [id], [name] FROM [dogs];",
-                "DROP TABLE [dogs];",
-                "ALTER TABLE [dogs_new_suffix] RENAME TO [dogs];",
+                "CREATE TABLE [cats_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT\n);",
+                "INSERT INTO [cats_new_suffix] ([rowid], [id], [name])\n   SELECT [rowid], [id], [name] FROM [cats];",
+                "DROP TABLE [cats];",
+                "ALTER TABLE [cats_new_suffix] RENAME TO [cats];",
             ],
         ),
         # Convert type AND rename column
         (
             {"types": {"age": int}, "rename": {"age": "dog_age"}},
             [
-                "CREATE TABLE [dogs_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [dog_age] INTEGER\n);",
-                "INSERT INTO [dogs_new_suffix] ([rowid], [id], [name], [dog_age])\n   SELECT [rowid], [id], [name], [age] FROM [dogs];",
-                "DROP TABLE [dogs];",
-                "ALTER TABLE [dogs_new_suffix] RENAME TO [dogs];",
+                "CREATE TABLE [cats_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [dog_age] INTEGER\n);",
+                "INSERT INTO [cats_new_suffix] ([rowid], [id], [name], [dog_age])\n   SELECT [rowid], [id], [name], [age] FROM [cats];",
+                "DROP TABLE [cats];",
+                "ALTER TABLE [cats_new_suffix] RENAME TO [cats];",
             ],
         ),
         # Change primary key
         (
             {"pk": "age"},
             [
-                "CREATE TABLE [dogs_new_suffix] (\n   [id] INTEGER,\n   [name] TEXT,\n   [age] TEXT PRIMARY KEY\n);",
-                "INSERT INTO [dogs_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [dogs];",
-                "DROP TABLE [dogs];",
-                "ALTER TABLE [dogs_new_suffix] RENAME TO [dogs];",
+                "CREATE TABLE [cats_new_suffix] (\n   [id] INTEGER,\n   [name] TEXT,\n   [age] TEXT PRIMARY KEY\n);",
+                "INSERT INTO [cats_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [cats];",
+                "DROP TABLE [cats];",
+                "ALTER TABLE [cats_new_suffix] RENAME TO [cats];",
             ],
         ),
         # Change primary key to a compound pk
         (
             {"pk": ("age", "name")},
             [
-                "CREATE TABLE [dogs_new_suffix] (\n   [id] INTEGER,\n   [name] TEXT,\n   [age] TEXT,\n   PRIMARY KEY ([age], [name])\n);",
-                "INSERT INTO [dogs_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [dogs];",
-                "DROP TABLE [dogs];",
-                "ALTER TABLE [dogs_new_suffix] RENAME TO [dogs];",
+                "CREATE TABLE [cats_new_suffix] (\n   [id] INTEGER,\n   [name] TEXT,\n   [age] TEXT,\n   PRIMARY KEY ([age], [name])\n);",
+                "INSERT INTO [cats_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [cats];",
+                "DROP TABLE [cats];",
+                "ALTER TABLE [cats_new_suffix] RENAME TO [cats];",
             ],
         ),
         # Remove primary key, creating a rowid table
         (
             {"pk": None},
             [
-                "CREATE TABLE [dogs_new_suffix] (\n   [id] INTEGER,\n   [name] TEXT,\n   [age] TEXT\n);",
-                "INSERT INTO [dogs_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [dogs];",
-                "DROP TABLE [dogs];",
-                "ALTER TABLE [dogs_new_suffix] RENAME TO [dogs];",
+                "CREATE TABLE [cats_new_suffix] (\n   [id] INTEGER,\n   [name] TEXT,\n   [age] TEXT\n);",
+                "INSERT INTO [cats_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [cats];",
+                "DROP TABLE [cats];",
+                "ALTER TABLE [cats_new_suffix] RENAME TO [cats];",
             ],
         ),
         # Keeping the table
         (
             {"drop": ["age"], "keep_table": "kept_table"},
             [
-                "CREATE TABLE [dogs_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT\n);",
-                "INSERT INTO [dogs_new_suffix] ([rowid], [id], [name])\n   SELECT [rowid], [id], [name] FROM [dogs];",
-                "ALTER TABLE [dogs] RENAME TO [kept_table];",
-                "ALTER TABLE [dogs_new_suffix] RENAME TO [dogs];",
+                "CREATE TABLE [cats_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT\n);",
+                "INSERT INTO [cats_new_suffix] ([rowid], [id], [name])\n   SELECT [rowid], [id], [name] FROM [cats];",
+                "ALTER TABLE [cats] RENAME TO [kept_table];",
+                "ALTER TABLE [cats_new_suffix] RENAME TO [cats];",
             ],
         ),
     ],
@@ -107,15 +107,15 @@ def test_transform_sql_table_with_primary_key(
     def tracer(sql, params):
         return captured.append((sql, params))
 
-    dogs = fresh_db["dogs"]
+    cats = fresh_db["cats"]
     if use_pragma_foreign_keys:
         fresh_db.conn.execute("PRAGMA foreign_keys=ON")
-    dogs.insert({"id": 1, "name": "Cleo", "age": "5"}, pk="id")
-    sql = dogs.transform_sql(**{**params, **{"tmp_suffix": "suffix"}})
+    cats.insert({"id": 1, "name": "Emme", "age": "5"}, pk="id")
+    sql = cats.transform_sql(**{**params, **{"tmp_suffix": "suffix"}})
     assert sql == expected_sql
     # Check that .transform() runs without exceptions:
     with fresh_db.tracer(tracer):
-        dogs.transform(**params)
+        cats.transform(**params)
     # If use_pragma_foreign_keys, check that we did the right thing
     if use_pragma_foreign_keys:
         assert ("PRAGMA foreign_keys=0;", None) in captured
@@ -133,40 +133,40 @@ def test_transform_sql_table_with_primary_key(
         (
             {},
             [
-                "CREATE TABLE [dogs_new_suffix] (\n   [id] INTEGER,\n   [name] TEXT,\n   [age] TEXT\n);",
-                "INSERT INTO [dogs_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [dogs];",
-                "DROP TABLE [dogs];",
-                "ALTER TABLE [dogs_new_suffix] RENAME TO [dogs];",
+                "CREATE TABLE [cats_new_suffix] (\n   [id] INTEGER,\n   [name] TEXT,\n   [age] TEXT\n);",
+                "INSERT INTO [cats_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [cats];",
+                "DROP TABLE [cats];",
+                "ALTER TABLE [cats_new_suffix] RENAME TO [cats];",
             ],
         ),
         # Change column type
         (
             {"types": {"age": int}},
             [
-                "CREATE TABLE [dogs_new_suffix] (\n   [id] INTEGER,\n   [name] TEXT,\n   [age] INTEGER\n);",
-                "INSERT INTO [dogs_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [dogs];",
-                "DROP TABLE [dogs];",
-                "ALTER TABLE [dogs_new_suffix] RENAME TO [dogs];",
+                "CREATE TABLE [cats_new_suffix] (\n   [id] INTEGER,\n   [name] TEXT,\n   [age] INTEGER\n);",
+                "INSERT INTO [cats_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [cats];",
+                "DROP TABLE [cats];",
+                "ALTER TABLE [cats_new_suffix] RENAME TO [cats];",
             ],
         ),
         # Rename a column
         (
             {"rename": {"age": "dog_age"}},
             [
-                "CREATE TABLE [dogs_new_suffix] (\n   [id] INTEGER,\n   [name] TEXT,\n   [dog_age] TEXT\n);",
-                "INSERT INTO [dogs_new_suffix] ([rowid], [id], [name], [dog_age])\n   SELECT [rowid], [id], [name], [age] FROM [dogs];",
-                "DROP TABLE [dogs];",
-                "ALTER TABLE [dogs_new_suffix] RENAME TO [dogs];",
+                "CREATE TABLE [cats_new_suffix] (\n   [id] INTEGER,\n   [name] TEXT,\n   [dog_age] TEXT\n);",
+                "INSERT INTO [cats_new_suffix] ([rowid], [id], [name], [dog_age])\n   SELECT [rowid], [id], [name], [age] FROM [cats];",
+                "DROP TABLE [cats];",
+                "ALTER TABLE [cats_new_suffix] RENAME TO [cats];",
             ],
         ),
         # Make ID a primary key
         (
             {"pk": "id"},
             [
-                "CREATE TABLE [dogs_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] TEXT\n);",
-                "INSERT INTO [dogs_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [dogs];",
-                "DROP TABLE [dogs];",
-                "ALTER TABLE [dogs_new_suffix] RENAME TO [dogs];",
+                "CREATE TABLE [cats_new_suffix] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] TEXT\n);",
+                "INSERT INTO [cats_new_suffix] ([rowid], [id], [name], [age])\n   SELECT [rowid], [id], [name], [age] FROM [cats];",
+                "DROP TABLE [cats];",
+                "ALTER TABLE [cats_new_suffix] RENAME TO [cats];",
             ],
         ),
     ],
@@ -180,15 +180,15 @@ def test_transform_sql_table_with_no_primary_key(
     def tracer(sql, params):
         return captured.append((sql, params))
 
-    dogs = fresh_db["dogs"]
+    cats = fresh_db["cats"]
     if use_pragma_foreign_keys:
         fresh_db.conn.execute("PRAGMA foreign_keys=ON")
-    dogs.insert({"id": 1, "name": "Cleo", "age": "5"})
-    sql = dogs.transform_sql(**{**params, **{"tmp_suffix": "suffix"}})
+    cats.insert({"id": 1, "name": "Emme", "age": "5"})
+    sql = cats.transform_sql(**{**params, **{"tmp_suffix": "suffix"}})
     assert sql == expected_sql
     # Check that .transform() runs without exceptions:
     with fresh_db.tracer(tracer):
-        dogs.transform(**params)
+        cats.transform(**params)
     # If use_pragma_foreign_keys, check that we did the right thing
     if use_pragma_foreign_keys:
         assert ("PRAGMA foreign_keys=0;", None) in captured
@@ -200,88 +200,88 @@ def test_transform_sql_table_with_no_primary_key(
 
 
 def test_transform_sql_with_no_primary_key_to_primary_key_of_id(fresh_db):
-    dogs = fresh_db["dogs"]
-    dogs.insert({"id": 1, "name": "Cleo", "age": "5"})
+    cats = fresh_db["cats"]
+    cats.insert({"id": 1, "name": "Emme", "age": "5"})
     assert (
-        dogs.schema
-        == "CREATE TABLE [dogs] (\n   [id] INTEGER,\n   [name] TEXT,\n   [age] TEXT\n)"
+        cats.schema
+        == "CREATE TABLE [cats] (\n   [id] INTEGER,\n   [name] TEXT,\n   [age] TEXT\n)"
     )
-    dogs.transform(pk="id")
-    # Slight oddity: [dogs] becomes "dogs" during the rename:
+    cats.transform(pk="id")
+    # Slight oddity: [cats] becomes "cats" during the rename:
     assert (
-        dogs.schema
-        == 'CREATE TABLE "dogs" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] TEXT\n)'
+        cats.schema
+        == 'CREATE TABLE "cats" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] TEXT\n)'
     )
 
 
 def test_transform_rename_pk(fresh_db):
-    dogs = fresh_db["dogs"]
-    dogs.insert({"id": 1, "name": "Cleo", "age": "5"}, pk="id")
-    dogs.transform(rename={"id": "pk"})
+    cats = fresh_db["cats"]
+    cats.insert({"id": 1, "name": "Emme", "age": "5"}, pk="id")
+    cats.transform(rename={"id": "pk"})
     assert (
-        dogs.schema
-        == 'CREATE TABLE "dogs" (\n   [pk] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] TEXT\n)'
+        cats.schema
+        == 'CREATE TABLE "cats" (\n   [pk] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] TEXT\n)'
     )
 
 
 def test_transform_not_null(fresh_db):
-    dogs = fresh_db["dogs"]
-    dogs.insert({"id": 1, "name": "Cleo", "age": "5"}, pk="id")
-    dogs.transform(not_null={"name"})
+    cats = fresh_db["cats"]
+    cats.insert({"id": 1, "name": "Emme", "age": "5"}, pk="id")
+    cats.transform(not_null={"name"})
     assert (
-        dogs.schema
-        == 'CREATE TABLE "dogs" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT NOT NULL,\n   [age] TEXT\n)'
+        cats.schema
+        == 'CREATE TABLE "cats" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT NOT NULL,\n   [age] TEXT\n)'
     )
 
 
 def test_transform_remove_a_not_null(fresh_db):
-    dogs = fresh_db["dogs"]
-    dogs.insert({"id": 1, "name": "Cleo", "age": "5"}, not_null={"age"}, pk="id")
-    dogs.transform(not_null={"name": True, "age": False})
+    cats = fresh_db["cats"]
+    cats.insert({"id": 1, "name": "Emme", "age": "5"}, not_null={"age"}, pk="id")
+    cats.transform(not_null={"name": True, "age": False})
     assert (
-        dogs.schema
-        == 'CREATE TABLE "dogs" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT NOT NULL,\n   [age] TEXT\n)'
+        cats.schema
+        == 'CREATE TABLE "cats" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT NOT NULL,\n   [age] TEXT\n)'
     )
 
 
 @pytest.mark.parametrize("not_null", [{"age"}, {"age": True}])
 def test_transform_add_not_null_with_rename(fresh_db, not_null):
-    dogs = fresh_db["dogs"]
-    dogs.insert({"id": 1, "name": "Cleo", "age": "5"}, pk="id")
-    dogs.transform(not_null=not_null, rename={"age": "dog_age"})
+    cats = fresh_db["cats"]
+    cats.insert({"id": 1, "name": "Emme", "age": "5"}, pk="id")
+    cats.transform(not_null=not_null, rename={"age": "dog_age"})
     assert (
-        dogs.schema
-        == 'CREATE TABLE "dogs" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [dog_age] TEXT NOT NULL\n)'
+        cats.schema
+        == 'CREATE TABLE "cats" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [dog_age] TEXT NOT NULL\n)'
     )
 
 
 def test_transform_defaults(fresh_db):
-    dogs = fresh_db["dogs"]
-    dogs.insert({"id": 1, "name": "Cleo", "age": 5}, pk="id")
-    dogs.transform(defaults={"age": 1})
+    cats = fresh_db["cats"]
+    cats.insert({"id": 1, "name": "Emme", "age": 5}, pk="id")
+    cats.transform(defaults={"age": 1})
     assert (
-        dogs.schema
-        == 'CREATE TABLE "dogs" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] INTEGER DEFAULT 1\n)'
+        cats.schema
+        == 'CREATE TABLE "cats" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] INTEGER DEFAULT 1\n)'
     )
 
 
 def test_transform_defaults_and_rename_column(fresh_db):
-    dogs = fresh_db["dogs"]
-    dogs.insert({"id": 1, "name": "Cleo", "age": 5}, pk="id")
-    dogs.transform(rename={"age": "dog_age"}, defaults={"age": 1})
+    cats = fresh_db["cats"]
+    cats.insert({"id": 1, "name": "Emme", "age": 5}, pk="id")
+    cats.transform(rename={"age": "dog_age"}, defaults={"age": 1})
     assert (
-        dogs.schema
-        == 'CREATE TABLE "dogs" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [dog_age] INTEGER DEFAULT 1\n)'
+        cats.schema
+        == 'CREATE TABLE "cats" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [dog_age] INTEGER DEFAULT 1\n)'
     )
 
 
 def test_remove_defaults(fresh_db):
-    dogs = fresh_db["dogs"]
-    dogs.insert({"id": 1, "name": "Cleo", "age": 5}, defaults={"age": 1}, pk="id")
-    dogs.transform(defaults={"age": None})
+    cats = fresh_db["cats"]
+    cats.insert({"id": 1, "name": "Emme", "age": 5}, defaults={"age": 1}, pk="id")
+    cats.transform(defaults={"age": None})
     assert (
-        dogs.schema
-        == 'CREATE TABLE "dogs" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] INTEGER\n)'
+        cats.schema
+        == 'CREATE TABLE "cats" (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [age] INTEGER\n)'
     )
 
 
@@ -534,8 +534,8 @@ def test_transform_preserves_rowids(fresh_db, table_type):
 
 @pytest.mark.parametrize("strict", (False, True))
 def test_transform_strict(fresh_db, strict):
-    dogs = fresh_db.table("dogs", strict=strict)
-    dogs.insert({"id": 1, "name": "Cleo"})
-    assert dogs.strict == strict or not fresh_db.supports_strict
-    dogs.transform(not_null={"name"})
-    assert dogs.strict == strict or not fresh_db.supports_strict
+    cats = fresh_db.table("cats", strict=strict)
+    cats.insert({"id": 1, "name": "Emme"})
+    assert cats.strict == strict or not fresh_db.supports_strict
+    cats.transform(not_null={"name"})
+    assert cats.strict == strict or not fresh_db.supports_strict

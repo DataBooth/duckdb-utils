@@ -1,6 +1,6 @@
 .venv
 build
-*.db
+*.duckdb
 __pycache__/
 *.py[cod]
 *$py.class

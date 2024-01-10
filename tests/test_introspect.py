@@ -1,4 +1,4 @@
-from sqlite_utils.db import Index, View, Database, XIndex, XIndexColumn
+from duckdb_utils.duckdb import Index, View, Database, XIndex, XIndexColumn
 import pytest
 
 
@@ -38,7 +38,7 @@ def test_detect_fts(existing_db):
 
 @pytest.mark.parametrize("reverse_order", (True, False))
 def test_detect_fts_similar_tables(fresh_db, reverse_order):
-    # https://github.com/simonw/sqlite-utils/issues/434
+    # https://github.com/databooth/duckdb-utils/issues/434
     table1, table2 = ("demo", "demo2")
     if reverse_order:
         table1, table2 = table2, table1
@@ -95,8 +95,8 @@ def test_database_schema(existing_db):
 
 
 def test_table_repr(fresh_db):
-    table = fresh_db["dogs"].insert({"name": "Cleo", "age": 4})
-    assert "<Table dogs (name, age)>" == repr(table)
+    table = fresh_db["cats"].insert({"name": "Emme", "age": 4})
+    assert "<Table cats (name, age)>" == repr(table)
     assert "<Table cats (does not exist yet)>" == repr(fresh_db["cats"])
 
 
@@ -275,15 +275,15 @@ def test_virtual_table_using(fresh_db, sql, expected_name, expected_using):
 
 
 def test_use_rowid(fresh_db):
-    fresh_db["rowid_table"].insert({"name": "Cleo"})
-    fresh_db["regular_table"].insert({"id": 1, "name": "Cleo"}, pk="id")
+    fresh_db["rowid_table"].insert({"name": "Emme"})
+    fresh_db["regular_table"].insert({"id": 1, "name": "Emme"}, pk="id")
     assert fresh_db["rowid_table"].use_rowid
     assert not fresh_db["regular_table"].use_rowid
 
 
 @pytest.mark.skipif(
     not Database(memory=True).supports_strict,
-    reason="Needs SQLite version that supports strict",
+    reason="Needs DuckDB version that supports strict",
 )
 @pytest.mark.parametrize(
     "create_table,expected_strict",

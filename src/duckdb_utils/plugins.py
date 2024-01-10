@@ -2,12 +2,12 @@ import pluggy
 import sys
 from . import hookspecs
 
-pm = pluggy.PluginManager("sqlite_utils")
+pm = pluggy.PluginManager("duckdb_utils")
 pm.add_hookspecs(hookspecs)
 
 if not getattr(sys, "_called_from_test", False):
     # Only load plugins if not running tests
-    pm.load_setuptools_entrypoints("sqlite_utils")
+    pm.load_setuptools_entrypoints("duckdb_utils")
 
 
 def get_plugins():

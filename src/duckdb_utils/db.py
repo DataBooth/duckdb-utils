@@ -1,7 +1,7 @@
 from .utils import (
     chunks,
     hash_record,
-    sqlite3,
+    duckdb,
     OperationalError,
     suggest_column_types,
     types_for_column_types,
@@ -22,7 +22,7 @@ import os
 import pathlib
 import re
 import secrets
-from sqlite_fts4 import rank_bm25  # type: ignore
+from duckdb_fts4 import rank_bm25  # type: ignore
 import textwrap
 from typing import (
     cast,
@@ -37,15 +37,15 @@ from typing import (
     Tuple,
 )
 import uuid
-from sqlite_utils.plugins import pm
+from duckdb_utils.plugins import pm
 
 try:
-    from sqlite_dump import iterdump
+    from duckdb_dump import iterdump
 except ImportError:
     iterdump = None
 
 
-SQLITE_MAX_VARS = 999
+duckdb_MAX_VARS = 999
 
 _quote_fts_re = re.compile(r'\s+|(".*?")')
 
@@ -58,7 +58,7 @@ _virtual_table_using_re = re.compile(
     "(?P<dquoted_table>[^"]*(?:""[^"]*)*)" | # double quoted name
     `(?P<backtick_table>[^`]+)`            | # `backtick` quoted name
     \[(?P<squarequoted_table>[^\]]+)\]     | # [...] quoted name
-    (?P<identifier>                          # SQLite non-quoted identifier
+    (?P<identifier>                          # DuckDB non-quoted identifier
         [A-Za-z_\u0080-\uffff]  # \u0080-\uffff = "any character larger than u007f"
         [A-Za-z_\u0080-\uffff0-9\$]* # zero-or-more alphanemuric or $
     )
@@ -83,7 +83,7 @@ Column = namedtuple(
     "Column", ("cid", "name", "type", "notnull", "default_value", "is_pk")
 )
 Column.__doc__ = """
-Describes a SQLite column returned by the  :attr:`.Table.columns` property.
+Describes a DuckDB column returned by the  :attr:`.Table.columns` property.
 
 ``cid``
     Column index
@@ -191,7 +191,7 @@ COLUMN_TYPE_MAPPING = {
     decimal.Decimal: "FLOAT",
     None.__class__: "TEXT",
     uuid.UUID: "TEXT",
-    # SQLite explicit types
+    # DuckDB explicit types
     "TEXT": "TEXT",
     "INTEGER": "INTEGER",
     "FLOAT": "FLOAT",
@@ -283,17 +283,17 @@ CREATE TABLE IF NOT EXISTS [{}](
 
 class Database:
     """
-    Wrapper for a SQLite database connection that adds a variety of useful utility methods.
+    Wrapper for a DuckDB database connection that adds a variety of useful utility methods.
 
     To create an instance::
 
-        # create data.db file, or open existing:
-        db = Database("data.db")
+        # create data.duckdb file, or open existing:
+        db = Database("data.duckdb")
         # Create an in-memory database:
         dB = Database(memory=True)
 
     :param filename_or_conn: String path to a file, or a ``pathlib.Path`` object, or a
-      ``sqlite3`` connection
+      ``duckdb`` connection
     :param memory: set to ``True`` to create an in-memory database
     :param memory_name: creates a named in-memory database that can be shared across multiple connections
     :param recreate: set to ``True`` to delete and recreate a file database (**dangerous**)
@@ -311,7 +311,7 @@ class Database:
 
     def __init__(
         self,
-        filename_or_conn: Optional[Union[str, pathlib.Path, sqlite3.Connection]] = None,
+        filename_or_conn: Optional[Union[str, pathlib.Path, duckdb.connection]] = None,
         memory: bool = False,
         memory_name: Optional[str] = None,
         recreate: bool = False,
@@ -326,23 +326,23 @@ class Database:
         ), "Either specify a filename_or_conn or pass memory=True"
         if memory_name:
             uri = "file:{}?mode=memory&cache=shared".format(memory_name)
-            self.conn = sqlite3.connect(
+            self.conn = duckdb.connect(
                 uri,
                 uri=True,
                 check_same_thread=False,
             )
         elif memory or filename_or_conn == ":memory:":
-            self.conn = sqlite3.connect(":memory:")
+            self.conn = duckdb.connect(":memory:")
         elif isinstance(filename_or_conn, (str, pathlib.Path)):
             if recreate and os.path.exists(filename_or_conn):
                 try:
                     os.remove(filename_or_conn)
                 except OSError:
                     # Avoid mypy and __repr__ errors, see:
-                    # https://github.com/simonw/sqlite-utils/issues/503
-                    self.conn = sqlite3.connect(":memory:")
+                    # https://github.com/databooth/duckdb-utils/issues/503
+                    self.conn = duckdb.connect(":memory:")
                     raise
-            self.conn = sqlite3.connect(str(filename_or_conn))
+            self.conn = duckdb.connect(str(filename_or_conn))
         else:
             assert not recreate, "recreate cannot be used with connections, only paths"
             self.conn = filename_or_conn
@@ -356,7 +356,7 @@ class Database:
         self.strict = strict
 
     def close(self):
-        "Close the SQLite connection, and the underlying database file"
+        "Close the DuckDB connection, and the underlying database file"
         self.conn.close()
 
     @contextlib.contextmanager
@@ -389,7 +389,7 @@ class Database:
         Example usage::
 
             with db.tracer(print):
-                db["creatures"].insert({"name": "Cleo"})
+                db["creatures"].insert({"name": "Emme"})
 
         See :ref:`python_api_tracing`.
 
@@ -440,7 +440,7 @@ class Database:
         :param fn: Function to register
         :param deterministic: set ``True`` for functions that always returns the same output for a given input
         :param replace: set ``True`` to replace an existing function with the same name - otherwise throw an error
-        :param name: name of the SQLite function - if not specified, the Python function name will be used
+        :param name: name of the DuckDB function - if not specified, the Python function name will be used
         """
 
         def register(fn):
@@ -451,13 +451,13 @@ class Database:
             kwargs = {}
             registered = False
             if deterministic:
-                # Try this, but fall back if sqlite3.NotSupportedError
+                # Try this, but fall back if duckdb.NotSupportedError
                 try:
                     self.conn.create_function(
                         fn_name, arity, fn, **dict(kwargs, deterministic=True)
                     )
                     registered = True
-                except (sqlite3.NotSupportedError, TypeError):
+                except (duckdb.NotSupportedError, TypeError):
                     # TypeError is Python 3.7 "function takes at most 3 arguments"
                     pass
             if not registered:
@@ -471,17 +471,17 @@ class Database:
             register(fn)
 
     def register_fts4_bm25(self):
-        "Register the ``rank_bm25(match_info)`` function used for calculating relevance with SQLite FTS4."
+        "Register the ``rank_bm25(match_info)`` function used for calculating relevance with DuckDB FTS4."
         self.register_function(rank_bm25, deterministic=True, replace=True)
 
     def attach(self, alias: str, filepath: Union[str, pathlib.Path]):
         """
-        Attach another SQLite database file to this connection with the specified alias, equivalent to::
+        Attach another DuckDB database file to this connection with the specified alias, equivalent to::
 
-            ATTACH DATABASE 'filepath.db' AS alias
+            ATTACH DATABASE 'filepath.duckdb' AS alias
 
         :param alias: Alias name to use
-        :param filepath: Path to SQLite database file on disk
+        :param filepath: Path to DuckDB database file on disk
         """
         attach_sql = """
             ATTACH DATABASE '{}' AS [{}];
@@ -507,9 +507,9 @@ class Database:
 
     def execute(
         self, sql: str, parameters: Optional[Union[Iterable, dict]] = None
-    ) -> sqlite3.Cursor:
+    ) -> duckdb.Cursor:
         """
-        Execute SQL query and return a ``sqlite3.Cursor``.
+        Execute SQL query and return a ``duckdb.Cursor``.
 
         :param sql: SQL query to execute
         :param parameters: Parameters to use in that query - an iterable for ``where id = ?``
@@ -522,9 +522,9 @@ class Database:
         else:
             return self.conn.execute(sql)
 
-    def executescript(self, sql: str) -> sqlite3.Cursor:
+    def executescript(self, sql: str) -> duckdb.Cursor:
         """
-        Execute multiple SQL statements separated by ; and return the ``sqlite3.Cursor``.
+        Execute multiple SQL statements separated by ; and return the ``duckdb.Cursor``.
 
         :param sql: SQL to execute
         """
@@ -548,7 +548,7 @@ class Database:
 
     def quote(self, value: str) -> str:
         """
-        Apply SQLite string quoting to a value, including wrapping it in single quotes.
+        Apply DuckDB string quoting to a value, including wrapping it in single quotes.
 
         :param value: String to quote
         """
@@ -556,14 +556,14 @@ class Database:
         # occasionally that isn't available - most notable when we need
         # to include a "... DEFAULT 'value'" in a column definition.
         return self.execute(
-            # Use SQLite itself to correctly escape this string:
+            # Use DuckDB itself to correctly escape this string:
             "SELECT quote(:value)",
             {"value": value},
         ).fetchone()[0]
 
     def quote_fts(self, query: str) -> str:
         """
-        Escape special characters in a SQLite full-text search query.
+        Escape special characters in a DuckDB full-text search query.
 
         This works by surrounding each token within the query with double
         quotes, in order to avoid words like ``NOT`` and ``OR`` having
@@ -613,7 +613,7 @@ class Database:
             where.append("sql like '%USING FTS4%'")
         if fts5:
             where.append("sql like '%USING FTS5%'")
-        sql = "select name from sqlite_master where {}".format(" AND ".join(where))
+        sql = "select name from duckdb_master where {}".format(" AND ".join(where))
         return [r[0] for r in self.execute(sql).fetchall()]
 
     def view_names(self) -> List[str]:
@@ -621,7 +621,7 @@ class Database:
         return [
             r[0]
             for r in self.execute(
-                "select name from sqlite_master where type = 'view'"
+                "select name from duckdb_master where type = 'view'"
             ).fetchall()
         ]
 
@@ -641,7 +641,7 @@ class Database:
         return [
             Trigger(*r)
             for r in self.execute(
-                "select name, tbl_name, sql from sqlite_master where type = 'trigger'"
+                "select name, tbl_name, sql from duckdb_master where type = 'trigger'"
             ).fetchall()
         ]
 
@@ -655,7 +655,7 @@ class Database:
         "SQL schema for this database."
         sqls = []
         for row in self.execute(
-            "select sql from sqlite_master where sql is not null"
+            "select sql from duckdb_master where sql is not null"
         ).fetchall():
             sql = row[0]
             if not sql.strip().endswith(";"):
@@ -678,9 +678,9 @@ class Database:
             return False
 
     @property
-    def sqlite_version(self) -> Tuple[int, ...]:
-        "Version of SQLite, as a tuple of integers for example ``(3, 36, 0)``."
-        row = self.execute("select sqlite_version()").fetchall()[0]
+    def duckdb_version(self) -> Tuple[int, ...]:
+        "Version of DuckDB, as a tuple of integers for example ``(3, 36, 0)``."
+        row = self.execute("select duckdb_version()").fetchall()[0]
         return tuple(map(int, row[0].split(".")))
 
     @property
@@ -1203,7 +1203,7 @@ class Database:
                     table.create_index([fk.column], find_unique_name=True)
 
     def vacuum(self):
-        "Run a SQLite ``VACUUM`` against the database."
+        "Run a DuckDB ``VACUUM`` against the database."
         self.execute("VACUUM;")
 
     def analyze(self, name=None):
@@ -1239,10 +1239,10 @@ class Database:
 
         .. code-block:: python
 
-            from sqlite_utils.db import Database
-            from sqlite_utils.utils import find_spatialite
+            from duckdb_utils.duckdb import Database
+            from duckdb_utils.utils import find_spatialite
 
-            db = Database("mydb.db")
+            db = Database("mydb.duckdb")
             db.init_spatialite(find_spatialite())
 
         If you've installed SpatiaLite somewhere unexpected (for testing an alternate version, for example)
@@ -1250,10 +1250,10 @@ class Database:
 
         .. code-block:: python
 
-            from sqlite_utils.db import Database
-            from sqlite_utils.utils import find_spatialite
+            from duckdb_utils.duckdb import Database
+            from duckdb_utils.utils import find_spatialite
 
-            db = Database("mydb.db")
+            db = Database("mydb.duckdb")
             db.init_spatialite("./local/mod_spatialite.dylib")
 
         :param path: Path to SpatiaLite module on disk
@@ -1277,7 +1277,7 @@ class Queryable:
         return False
 
     def __init__(self, db, name):
-        self.db = db
+        self.duckdb = db
         self.name = name
 
     def count_where(
@@ -1295,10 +1295,10 @@ class Queryable:
         sql = "select count(*) from [{}]".format(self.name)
         if where is not None:
             sql += " where " + where
-        return self.db.execute(sql, where_args or []).fetchone()[0]
+        return self.duckdb.execute(sql, where_args or []).fetchone()[0]
 
     def execute_count(self):
-        # Backwards compatibility, see https://github.com/simonw/sqlite-utils/issues/305#issuecomment-890713185
+        # Backwards compatibility, see https://github.com/databooth/duckdb-utils/issues/305#issuecomment-890713185
         return self.count_where()
 
     @property
@@ -1344,7 +1344,7 @@ class Queryable:
             sql += " limit {}".format(limit)
         if offset is not None:
             sql += " offset {}".format(offset)
-        cursor = self.db.execute(sql, where_args or [])
+        cursor = self.duckdb.execute(sql, where_args or [])
         columns = [c[0] for c in cursor.description]
         for row in cursor:
             yield dict(zip(columns, row))
@@ -1392,7 +1392,7 @@ class Queryable:
         "List of :ref:`Columns <reference_db_other_column>` representing the columns in this table or view."
         if not self.exists():
             return []
-        rows = self.db.execute("PRAGMA table_info([{}])".format(self.name)).fetchall()
+        rows = self.duckdb.execute("PRAGMA table_info([{}])".format(self.name)).fetchall()
         return [Column(*row) for row in rows]
 
     @property
@@ -1403,8 +1403,8 @@ class Queryable:
     @property
     def schema(self) -> str:
         "SQL schema for this table or view."
-        return self.db.execute(
-            "select sql from sqlite_master where name = ?", (self.name,)
+        return self.duckdb.execute(
+            "select sql from duckdb_master where name = ?", (self.name,)
         ).fetchone()[0]
 
 
@@ -1489,14 +1489,14 @@ class Table(Queryable):
     @property
     def count(self) -> int:
         "Count of the rows in this table - optionally from the table count cache, if configured."
-        if self.db.use_counts_table:
-            counts = self.db.cached_counts([self.name])
+        if self.duckdb.use_counts_table:
+            counts = self.duckdb.cached_counts([self.name])
             if counts:
                 return next(iter(counts.values()))
         return self.count_where()
 
     def exists(self) -> bool:
-        return self.name in self.db.table_names()
+        return self.name in self.duckdb.table_names()
 
     @property
     def pks(self) -> List[str]:
@@ -1515,7 +1515,7 @@ class Table(Queryable):
         """
         Return row (as dictionary) for the specified primary key.
 
-        Raises ``sqlite_utils.db.NotFoundError`` if a matching row cannot be found.
+        Raises ``duckdb_utils.duckdb.NotFoundError`` if a matching row cannot be found.
 
         :param pk_values: A single value, or a tuple of values for tables that have a compound primary key
         """
@@ -1543,7 +1543,7 @@ class Table(Queryable):
     def foreign_keys(self) -> List["ForeignKey"]:
         "List of foreign keys defined on this table."
         fks = []
-        for row in self.db.execute(
+        for row in self.duckdb.execute(
             "PRAGMA foreign_key_list([{}])".format(self.name)
         ).fetchall():
             if row is not None:
@@ -1571,7 +1571,7 @@ class Table(Queryable):
         "List of indexes defined on this table."
         sql = 'PRAGMA index_list("{}")'.format(self.name)
         indexes = []
-        for row in self.db.execute_returning_dicts(sql):
+        for row in self.duckdb.execute_returning_dicts(sql):
             index_name = row["name"]
             index_name_quoted = (
                 '"{}"'.format(index_name)
@@ -1580,10 +1580,10 @@ class Table(Queryable):
             )
             column_sql = "PRAGMA index_info({})".format(index_name_quoted)
             columns = []
-            for seqno, cid, name in self.db.execute(column_sql).fetchall():
+            for seqno, cid, name in self.duckdb.execute(column_sql).fetchall():
                 columns.append(name)
             row["columns"] = columns
-            # These columns may be missing on older SQLite versions:
+            # These columns may be missing on older DuckDB versions:
             for key, default in {"origin": "c", "partial": 0}.items():
                 if key not in row:
                     row[key] = default
@@ -1595,7 +1595,7 @@ class Table(Queryable):
         "List of indexes defined on this table using the more detailed ``XIndex`` format."
         sql = 'PRAGMA index_list("{}")'.format(self.name)
         indexes = []
-        for row in self.db.execute_returning_dicts(sql):
+        for row in self.duckdb.execute_returning_dicts(sql):
             index_name = row["name"]
             index_name_quoted = (
                 '"{}"'.format(index_name)
@@ -1604,7 +1604,7 @@ class Table(Queryable):
             )
             column_sql = "PRAGMA index_xinfo({})".format(index_name_quoted)
             index_columns = []
-            for info in self.db.execute(column_sql).fetchall():
+            for info in self.duckdb.execute(column_sql).fetchall():
                 index_columns.append(XIndexColumn(*info))
             indexes.append(XIndex(index_name, index_columns))
         return indexes
@@ -1614,8 +1614,8 @@ class Table(Queryable):
         "List of triggers defined on this table."
         return [
             Trigger(*r)
-            for r in self.db.execute(
-                "select name, tbl_name, sql from sqlite_master where type = 'trigger'"
+            for r in self.duckdb.execute(
+                "select name, tbl_name, sql from duckdb_master where type = 'trigger'"
                 " and tbl_name = ?",
                 (self.name,),
             ).fetchall()
@@ -1680,8 +1680,8 @@ class Table(Queryable):
         :param strict: Apply STRICT mode to table
         """
         columns = {name: value for (name, value) in columns.items()}
-        with self.db.conn:
-            self.db.create_table(
+        with self.duckdb.conn:
+            self.duckdb.create_table(
                 self.name,
                 columns,
                 pk=pk,
@@ -1708,13 +1708,13 @@ class Table(Queryable):
         """
         if not self.exists():
             raise NoTable(f"Table {self.name} does not exist")
-        with self.db.conn:
+        with self.duckdb.conn:
             sql = "CREATE TABLE [{new_table}] AS SELECT * FROM [{table}];".format(
                 new_table=new_name,
                 table=self.name,
             )
-            self.db.execute(sql)
-        return self.db[new_name]
+            self.duckdb.execute(sql)
+        return self.duckdb[new_name]
 
     def transform(
         self,
@@ -1733,7 +1733,7 @@ class Table(Queryable):
     ) -> "Table":
         """
         Apply an advanced alter table, including operations that are not supported by
-        ``ALTER TABLE`` in SQLite itself.
+        ``ALTER TABLE`` in DuckDB itself.
 
         See :ref:`python_api_transform` for full details.
 
@@ -1765,21 +1765,21 @@ class Table(Queryable):
             column_order=column_order,
             keep_table=keep_table,
         )
-        pragma_foreign_keys_was_on = self.db.execute("PRAGMA foreign_keys").fetchone()[
+        pragma_foreign_keys_was_on = self.duckdb.execute("PRAGMA foreign_keys").fetchone()[
             0
         ]
         try:
             if pragma_foreign_keys_was_on:
-                self.db.execute("PRAGMA foreign_keys=0;")
-            with self.db.conn:
+                self.duckdb.execute("PRAGMA foreign_keys=0;")
+            with self.duckdb.conn:
                 for sql in sqls:
-                    self.db.execute(sql)
+                    self.duckdb.execute(sql)
                 # Run the foreign_key_check before we commit
                 if pragma_foreign_keys_was_on:
-                    self.db.execute("PRAGMA foreign_key_check;")
+                    self.duckdb.execute("PRAGMA foreign_key_check;")
         finally:
             if pragma_foreign_keys_was_on:
-                self.db.execute("PRAGMA foreign_keys=1;")
+                self.duckdb.execute("PRAGMA foreign_keys=1;")
         return self
 
     def transform_sql(
@@ -1848,7 +1848,7 @@ class Table(Queryable):
                     )
             # Add new foreign keys
             if add_foreign_keys is not None:
-                for fk in self.db.resolve_foreign_keys(self.name, add_foreign_keys):
+                for fk in self.duckdb.resolve_foreign_keys(self.name, add_foreign_keys):
                     create_table_foreign_keys.append(
                         ForeignKey(
                             self.name,
@@ -1922,7 +1922,7 @@ class Table(Queryable):
 
         sqls = []
         sqls.append(
-            self.db.create_table_sql(
+            self.duckdb.create_table_sql(
                 new_table_name,
                 dict(new_column_pairs),
                 pk=pk,
@@ -1991,7 +1991,7 @@ class Table(Queryable):
                 )
             )
         table = table or "_".join(columns)
-        lookup_table = self.db[table]
+        lookup_table = self.duckdb[table]
         fk_column = fk_column or "{}_id".format(table)
         magic_lookup_column = "{}_{}".format(fk_column, os.urandom(6).hex())
 
@@ -2022,7 +2022,7 @@ class Table(Queryable):
             )
         lookup_columns = [(rename.get(col) or col) for col in columns]
         lookup_table.create_index(lookup_columns, unique=True, if_not_exists=True)
-        self.db.execute(
+        self.duckdb.execute(
             "INSERT OR IGNORE INTO [{lookup_table}] ({lookup_columns}) SELECT DISTINCT {table_cols} FROM [{table}]".format(
                 lookup_table=table,
                 lookup_columns=", ".join("[{}]".format(c) for c in lookup_columns),
@@ -2035,7 +2035,7 @@ class Table(Queryable):
         self.add_column(magic_lookup_column, int)
 
         # And populate it
-        self.db.execute(
+        self.duckdb.execute(
             "UPDATE [{table}] SET [{magic_lookup_column}] = (SELECT id FROM [{lookup_table}] WHERE {where})".format(
                 table=self.name,
                 magic_lookup_column=magic_lookup_column,
@@ -2130,7 +2130,7 @@ class Table(Queryable):
                 )
             )
             try:
-                self.db.execute(sql)
+                self.duckdb.execute(sql)
                 break
             except OperationalError as e:
                 # find_unique_name=True - try again if 'index ... already exists'
@@ -2148,7 +2148,7 @@ class Table(Queryable):
                 else:
                     raise e
         if analyze:
-            self.db.analyze(created_index_name)
+            self.duckdb.analyze(created_index_name)
         return self
 
     def add_column(
@@ -2163,7 +2163,7 @@ class Table(Queryable):
         Add a column to this table. See :ref:`python_api_add_column`.
 
         :param col_name: Name of the new column
-        :param col_type: Column type - a Python type such as ``str`` or a SQLite type string such as ``"BLOB"``
+        :param col_type: Column type - a Python type such as ``str`` or a DuckDB type string such as ``"BLOB"``
         :param fk: Name of a table that this column should be a foreign key reference to
         :param fk_col: Column in the foreign key table that this should reference
         :param not_null_default: Set this column to ``not null`` and give it this default value
@@ -2171,15 +2171,15 @@ class Table(Queryable):
         fk_col_type = None
         if fk is not None:
             # fk must be a valid table
-            if fk not in self.db.table_names():
+            if fk not in self.duckdb.table_names():
                 raise AlterError("table '{}' does not exist".format(fk))
             # if fk_col specified, must be a valid column
             if fk_col is not None:
-                if fk_col not in self.db[fk].columns_dict:
+                if fk_col not in self.duckdb[fk].columns_dict:
                     raise AlterError("table '{}' has no column {}".format(fk, fk_col))
             else:
                 # automatically set fk_col to first primary_key of fk table
-                pks = [c for c in self.db[fk].columns if c.is_pk]
+                pks = [c for c in self.duckdb[fk].columns if c.is_pk]
                 if pks:
                     fk_col = pks[0].name
                     fk_col_type = pks[0].type
@@ -2191,7 +2191,7 @@ class Table(Queryable):
         not_null_sql = None
         if not_null_default is not None:
             not_null_sql = "NOT NULL DEFAULT {}".format(
-                self.db.quote_default_value(not_null_default)
+                self.duckdb.quote_default_value(not_null_default)
             )
         sql = "ALTER TABLE [{table}] ADD COLUMN [{col_name}] {col_type}{not_null_default};".format(
             table=self.name,
@@ -2199,7 +2199,7 @@ class Table(Queryable):
             col_type=fk_col_type or COLUMN_TYPE_MAPPING[col_type],
             not_null_default=(" " + not_null_sql) if not_null_sql else "",
         )
-        self.db.execute(sql)
+        self.duckdb.execute(sql)
         if fk is not None:
             self.add_foreign_key(col_name, fk, fk_col)
         return self
@@ -2211,8 +2211,8 @@ class Table(Queryable):
         :param ignore: Set to ``True`` to ignore the error if the table does not exist
         """
         try:
-            self.db.execute("DROP TABLE [{}]".format(self.name))
-        except sqlite3.OperationalError:
+            self.duckdb.execute("DROP TABLE [{}]".format(self.name))
+        except duckdb.OperationalError:
             if not ignore:
                 raise
 
@@ -2237,7 +2237,7 @@ class Table(Queryable):
                 possibilities.append(column_without_id + "s")
         elif not column.endswith("s"):
             possibilities.append(column + "s")
-        existing_tables = {t.lower(): t for t in self.db.table_names()}
+        existing_tables = {t.lower(): t for t in self.duckdb.table_names()}
         for table in possibilities:
             if table in existing_tables:
                 return existing_tables[table]
@@ -2249,7 +2249,7 @@ class Table(Queryable):
         )
 
     def guess_foreign_column(self, other_table: str):
-        pks = [c for c in self.db[other_table].columns if c.is_pk]
+        pks = [c for c in self.duckdb[other_table].columns if c.is_pk]
         if len(pks) != 1:
             raise BadPrimaryKey(
                 "Could not detect single primary key for table '{}'".format(other_table)
@@ -2284,7 +2284,7 @@ class Table(Queryable):
 
         # Soundness check that the other column exists
         if (
-            not [c for c in self.db[other_table].columns if c.name == other_column]
+            not [c for c in self.duckdb[other_table].columns if c.name == other_column]
             and other_column != "rowid"
         ):
             raise AlterError("No such column: {}.{}".format(other_table, other_column))
@@ -2304,7 +2304,7 @@ class Table(Queryable):
                         column, other_table, other_column
                     )
                 )
-        self.db.add_foreign_keys([(self.name, column, other_table, other_column)])
+        self.duckdb.add_foreign_keys([(self.name, column, other_table, other_column)])
         return self
 
     def enable_counts(self):
@@ -2345,23 +2345,23 @@ class Table(Queryable):
             .strip()
             .format(
                 create_counts_table=_COUNTS_TABLE_CREATE_SQL.format(
-                    self.db._counts_table_name
+                    self.duckdb._counts_table_name
                 ),
-                counts_table=self.db._counts_table_name,
+                counts_table=self.duckdb._counts_table_name,
                 table=self.name,
-                table_quoted=self.db.quote(self.name),
+                table_quoted=self.duckdb.quote(self.name),
             )
         )
-        with self.db.conn:
-            self.db.conn.executescript(sql)
-        self.db.use_counts_table = True
+        with self.duckdb.conn:
+            self.duckdb.conn.executescript(sql)
+        self.duckdb.use_counts_table = True
 
     @property
     def has_counts_triggers(self) -> bool:
         "Does this table have triggers setup to update cached counts?"
         trigger_names = {
             "{table}{counts_table}_{suffix}".format(
-                counts_table=self.db._counts_table_name, table=self.name, suffix=suffix
+                counts_table=self.duckdb._counts_table_name, table=self.name, suffix=suffix
             )
             for suffix in ["insert", "delete"]
         }
@@ -2376,14 +2376,14 @@ class Table(Queryable):
         replace: bool = False,
     ):
         """
-        Enable SQLite full-text search against the specified columns.
+        Enable DuckDB full-text search against the specified columns.
 
         See :ref:`python_api_fts` for more details.
 
         :param columns: List of column names to include in the search index.
-        :param fts_version: FTS version to use - defaults to ``FTS5`` but you may want ``FTS4`` for older SQLite versions.
+        :param fts_version: FTS version to use - defaults to ``FTS5`` but you may want ``FTS4`` for older DuckDB versions.
         :param create_triggers: Should triggers be created to keep the search index up-to-date? Defaults to ``False``.
-        :param tokenize: Custom SQLite tokenizer to use, for example ``"porter"`` to enable Porter stemming.
+        :param tokenize: Custom DuckDB tokenizer to use, for example ``"porter"`` to enable Porter stemming.
         :param replace: Should any existing FTS index for this table be replaced by the new one?
         """
         create_fts_sql = (
@@ -2404,9 +2404,9 @@ class Table(Queryable):
             )
         )
         should_recreate = False
-        if replace and self.db["{}_fts".format(self.name)].exists():
+        if replace and self.duckdb["{}_fts".format(self.name)].exists():
             # Does the table need to be recreated?
-            fts_schema = self.db["{}_fts".format(self.name)].schema
+            fts_schema = self.duckdb["{}_fts".format(self.name)].schema
             if fts_schema != create_fts_sql:
                 should_recreate = True
             expected_triggers = {self.name + suffix for suffix in ("_ai", "_ad", "_au")}
@@ -2421,7 +2421,7 @@ class Table(Queryable):
         if should_recreate:
             self.disable_fts()
 
-        self.db.executescript(create_fts_sql)
+        self.duckdb.executescript(create_fts_sql)
         self.populate_fts(columns)
 
         if create_triggers:
@@ -2450,12 +2450,12 @@ class Table(Queryable):
                     new_cols=new_cols,
                 )
             )
-            self.db.executescript(triggers)
+            self.duckdb.executescript(triggers)
         return self
 
     def populate_fts(self, columns: Iterable[str]) -> "Table":
         """
-        Update the associated SQLite full-text search index with the latest data from the
+        Update the associated DuckDB full-text search index with the latest data from the
         table for the specified columns.
 
         :param columns: Columns to populate the data for
@@ -2472,19 +2472,19 @@ class Table(Queryable):
                 table=self.name, columns=", ".join("[{}]".format(c) for c in columns)
             )
         )
-        self.db.executescript(sql)
+        self.duckdb.executescript(sql)
         return self
 
     def disable_fts(self) -> "Table":
         "Remove any full-text search index and related triggers configured for this table."
         fts_table = self.detect_fts()
         if fts_table:
-            self.db[fts_table].drop()
+            self.duckdb[fts_table].drop()
         # Now delete the triggers that related to that table
         sql = (
             textwrap.dedent(
                 """
-            SELECT name FROM sqlite_master
+            SELECT name FROM duckdb_master
                 WHERE type = 'trigger'
                 AND sql LIKE '% INSERT INTO [{}]%'
         """
@@ -2493,11 +2493,11 @@ class Table(Queryable):
             .format(fts_table)
         )
         trigger_names = []
-        for row in self.db.execute(sql).fetchall():
+        for row in self.duckdb.execute(sql).fetchall():
             trigger_names.append(row[0])
-        with self.db.conn:
+        with self.duckdb.conn:
             for trigger_name in trigger_names:
-                self.db.execute("DROP TRIGGER IF EXISTS [{}]".format(trigger_name))
+                self.duckdb.execute("DROP TRIGGER IF EXISTS [{}]".format(trigger_name))
         return self
 
     def rebuild_fts(self):
@@ -2506,7 +2506,7 @@ class Table(Queryable):
         if fts_table is None:
             # Assume this is itself an FTS table
             fts_table = self.name
-        self.db.execute(
+        self.duckdb.execute(
             "INSERT INTO [{table}]([{table}]) VALUES('rebuild');".format(
                 table=fts_table
             )
@@ -2517,7 +2517,7 @@ class Table(Queryable):
         "Detect if table has a corresponding FTS virtual table and return it"
         sql = textwrap.dedent(
             """
-            SELECT name FROM sqlite_master
+            SELECT name FROM duckdb_master
                 WHERE rootpage = 0
                 AND (
                     sql LIKE :like
@@ -2534,7 +2534,7 @@ class Table(Queryable):
             "like2": '%VIRTUAL TABLE%USING FTS%content="{}"%'.format(self.name),
             "table": self.name,
         }
-        rows = self.db.execute(sql, args).fetchall()
+        rows = self.duckdb.execute(sql, args).fetchall()
         if len(rows) == 0:
             return None
         else:
@@ -2544,7 +2544,7 @@ class Table(Queryable):
         "Run the ``optimize`` operation against the associated full-text search index table."
         fts_table = self.detect_fts()
         if fts_table is not None:
-            self.db.execute(
+            self.duckdb.execute(
                 """
                 INSERT INTO [{table}] ([{table}]) VALUES ("optimize");
             """.strip().format(
@@ -2585,7 +2585,7 @@ class Table(Queryable):
         assert fts_table, "Full-text search is not configured for table '{}'".format(
             self.name
         )
-        virtual_table_using = self.db[fts_table].virtual_table_using
+        virtual_table_using = self.duckdb[fts_table].virtual_table_using
         sql = textwrap.dedent(
             """
         with {original} as (
@@ -2609,7 +2609,7 @@ class Table(Queryable):
         if virtual_table_using == "FTS5":
             rank_implementation = "[{}].rank".format(fts_table)
         else:
-            self.db.register_fts4_bm25()
+            self.duckdb.register_fts4_bm25()
             rank_implementation = "rank_bm25(matchinfo([{}], 'pcnalx'))".format(
                 fts_table
             )
@@ -2643,7 +2643,7 @@ class Table(Queryable):
         quote: bool = False,
     ) -> Generator[dict, None, None]:
         """
-        Execute a search against this table using SQLite full-text search, returning a sequence of
+        Execute a search against this table using DuckDB full-text search, returning a sequence of
         dictionaries for each row.
 
         :param q: Terms to search for
@@ -2657,7 +2657,7 @@ class Table(Queryable):
 
         See :ref:`python_api_fts_search`.
         """
-        args = {"query": self.db.quote_fts(q) if quote else q}
+        args = {"query": self.duckdb.quote_fts(q) if quote else q}
         if where_args and "query" in where_args:
             raise ValueError(
                 "'query' is a reserved key and cannot be passed to where_args for .search()"
@@ -2665,7 +2665,7 @@ class Table(Queryable):
         if where_args:
             args.update(where_args)
 
-        cursor = self.db.execute(
+        cursor = self.duckdb.execute(
             self.search_sql(
                 order_by=order_by,
                 columns=columns,
@@ -2695,8 +2695,8 @@ class Table(Queryable):
         sql = "delete from [{table}] where {wheres}".format(
             table=self.name, wheres=" and ".join(wheres)
         )
-        with self.db.conn:
-            self.db.execute(sql, pk_values)
+        with self.duckdb.conn:
+            self.duckdb.execute(sql, pk_values)
         return self
 
     def delete_where(
@@ -2720,7 +2720,7 @@ class Table(Queryable):
         sql = "delete from [{}]".format(self.name)
         if where is not None:
             sql += " where " + where
-        self.db.execute(sql, where_args or [])
+        self.duckdb.execute(sql, where_args or [])
         if analyze:
             self.analyze()
         return self
@@ -2765,14 +2765,14 @@ class Table(Queryable):
         sql = "update [{table}] set {sets} where {wheres}".format(
             table=self.name, sets=", ".join(sets), wheres=" and ".join(wheres)
         )
-        with self.db.conn:
+        with self.duckdb.conn:
             try:
-                rowcount = self.db.execute(sql, args).rowcount
+                rowcount = self.duckdb.execute(sql, args).rowcount
             except OperationalError as e:
                 if alter and (" column" in e.args[0]):
                     # Attempt to add any missing columns, then try again
                     self.add_missing_columns([updates])
-                    rowcount = self.db.execute(sql, args).rowcount
+                    rowcount = self.duckdb.execute(sql, args).rowcount
                 else:
                     raise
 
@@ -2842,7 +2842,7 @@ class Table(Queryable):
             fn_name = fn.__name__
             if fn_name == "<lambda>":
                 fn_name = f"lambda_{abs(hash(fn))}"
-            self.db.register_function(convert_value, name=fn_name)
+            self.duckdb.register_function(convert_value, name=fn_name)
             sql = "update [{table}] set {sets}{where};".format(
                 table=self.name,
                 sets=", ".join(
@@ -2857,8 +2857,8 @@ class Table(Queryable):
                 ),
                 where=" where {}".format(where) if where is not None else "",
             )
-            with self.db.conn:
-                self.db.execute(sql, where_args or [])
+            with self.duckdb.conn:
+                self.duckdb.execute(sql, where_args or [])
                 if drop:
                     self.transform(drop=columns)
         return self
@@ -2905,7 +2905,7 @@ class Table(Queryable):
         with progressbar(
             length=self.count, silent=not show_progress, label="2: Updating"
         ) as bar:
-            with self.db.conn:
+            with self.duckdb.conn:
                 for pk, updates in pk_to_values.items():
                     self.update(pk, updates)
                     bar.update(1)
@@ -2947,7 +2947,7 @@ class Table(Queryable):
                 )
                 if key in extracts:
                     extract_table = extracts[key]
-                    value = self.db[extract_table].lookup({"value": value})
+                    value = self.duckdb[extract_table].lookup({"value": value})
                 record_values.append(value)
             values.append(record_values)
 
@@ -3054,16 +3054,16 @@ class Table(Queryable):
             ignore,
         )
 
-        with self.db.conn:
+        with self.duckdb.conn:
             result = None
             for query, params in queries_and_params:
                 try:
-                    result = self.db.execute(query, params)
+                    result = self.duckdb.execute(query, params)
                 except OperationalError as e:
                     if alter and (" column" in e.args[0]):
                         # Attempt to add any missing columns, then try again
                         self.add_missing_columns(chunk)
-                        result = self.db.execute(query, params)
+                        result = self.duckdb.execute(query, params)
                     elif e.args[0] == "too many SQL variables":
                         first_half = chunk[: len(chunk) // 2]
                         second_half = chunk[len(chunk) // 2 :]
@@ -3259,13 +3259,13 @@ class Table(Queryable):
             return self  # It was an empty list
         num_columns = len(first_record.keys())
         assert (
-            num_columns <= SQLITE_MAX_VARS
-        ), "Rows can have a maximum of {} columns".format(SQLITE_MAX_VARS)
-        batch_size = max(1, min(batch_size, SQLITE_MAX_VARS // num_columns))
+            num_columns <= duckdb_MAX_VARS
+        ), "Rows can have a maximum of {} columns".format(duckdb_MAX_VARS)
+        batch_size = max(1, min(batch_size, duckdb_MAX_VARS // num_columns))
         self.last_rowid = None
         self.last_pk = None
         if truncate and self.exists():
-            self.db.execute("DELETE FROM [{}];".format(self.name))
+            self.duckdb.execute("DELETE FROM [{}];".format(self.name))
         for chunk in chunks(itertools.chain([first_record], records), batch_size):
             chunk = list(chunk)
             num_records_processed += len(chunk)
@@ -3510,7 +3510,7 @@ class Table(Queryable):
 
         For example::
 
-            db["dogs"].insert({"id": 1, "name": "Cleo"}, pk="id").m2m(
+            db["cats"].insert({"id": 1, "name": "Emme"}, pk="id").m2m(
                 "humans", {"id": 1, "name": "Natalie"}, pk="id"
             )
 
@@ -3526,7 +3526,7 @@ class Table(Queryable):
           already exists.
         """
         if isinstance(other_table, str):
-            other_table = cast(Table, self.db.table(other_table, pk=pk))
+            other_table = cast(Table, self.duckdb.table(other_table, pk=pk))
         our_id = self.last_pk
         if lookup is not None:
             assert record_or_iterable is None, "Provide lookup= or record, not both"
@@ -3538,7 +3538,7 @@ class Table(Queryable):
             m2m_table_name = m2m_table
         else:
             # Detect if there is a single, unambiguous option
-            candidates = self.db.m2m_table_candidates(self.name, other_table.name)
+            candidates = self.duckdb.m2m_table_candidates(self.name, other_table.name)
             if len(candidates) == 1:
                 m2m_table_name = candidates[0]
             elif len(candidates) > 1:
@@ -3550,7 +3550,7 @@ class Table(Queryable):
             else:
                 # If not, create a new table
                 m2m_table_name = m2m_table or "{}_{}".format(*tables)
-        m2m_table_obj = self.db.table(m2m_table_name, pk=columns, foreign_keys=columns)
+        m2m_table_obj = self.duckdb.table(m2m_table_name, pk=columns, foreign_keys=columns)
         if lookup is None:
             # if records is only one record, put the record in a list
             if isinstance(record_or_iterable, Mapping):
@@ -3582,7 +3582,7 @@ class Table(Queryable):
 
     def analyze(self):
         "Run ANALYZE against this table"
-        self.db.analyze(self.name)
+        self.duckdb.analyze(self.name)
 
     def analyze_column(
         self,
@@ -3605,7 +3605,7 @@ class Table(Queryable):
         :param most_common: If ``True``, calculate the most common values
         :param least_common: If ``True``, calculate the least common values
         """
-        db = self.db
+        db = self.duckdb
         table = self.name
         if total_rows is None:
             total_rows = db[table].count
@@ -3694,10 +3694,10 @@ class Table(Queryable):
 
         .. code-block:: python
 
-            from sqlite_utils.db import Database
-            from sqlite_utils.utils import find_spatialite
+            from duckdb_utils.duckdb import Database
+            from duckdb_utils.utils import find_spatialite
 
-            db = Database("mydb.db")
+            db = Database("mydb.duckdb")
             db.init_spatialite(find_spatialite())
 
             # the table must exist before adding a geometry column
@@ -3710,7 +3710,7 @@ class Table(Queryable):
         :param coord_dimension: Dimensions to use, defaults to ``"XY"`` - set to ``"XYZ"`` to work in three dimensions
         :param not_null: Should the column be ``NOT NULL``
         """
-        cursor = self.db.execute(
+        cursor = self.duckdb.execute(
             "SELECT AddGeometryColumn(?, ?, ?, ?, ?, ?);",
             [
                 self.name,
@@ -3749,10 +3749,10 @@ class Table(Queryable):
 
         :param column_name: Geometry column to create the spatial index against
         """
-        if f"idx_{self.name}_{column_name}" in self.db.table_names():
+        if f"idx_{self.name}_{column_name}" in self.duckdb.table_names():
             return False
 
-        cursor = self.db.execute(
+        cursor = self.duckdb.execute(
             "select CreateSpatialIndex(?, ?)", [self.name, column_name]
         )
         result = cursor.fetchone()
@@ -3776,8 +3776,8 @@ class View(Queryable):
         """
 
         try:
-            self.db.execute("DROP VIEW [{}]".format(self.name))
-        except sqlite3.OperationalError:
+            self.duckdb.execute("DROP VIEW [{}]".format(self.name))
+        except duckdb.OperationalError:
             if not ignore:
                 raise
 

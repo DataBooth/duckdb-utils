@@ -1,4 +1,4 @@
-from sqlite_utils.db import InvalidColumns
+from duckdb_utils.duckdb import InvalidColumns
 import itertools
 import pytest
 

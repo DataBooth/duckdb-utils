@@ -1,7 +1,7 @@
-# duckdb-utils
+# `duckdb-utils`
 
 [![PyPI](https://img.shields.io/pypi/v/duckdb-utils.svg)](https://pypi.org/project/duckdb-utils/)
-<-- [![Changelog](https://img.shields.io/github/v/release/databooth/duckdb-utils?include_prereleases&label=changelog)](https://duckdb-utils.databooth.com.au/en/stable/changelog.html)
+<!-- [![Changelog](https://img.shields.io/github/v/release/databooth/duckdb-utils?include_prereleases&label=changelog)](https://duckdb-utils.databooth.com.au/en/stable/changelog.html)
 [![Python 3.x](https://img.shields.io/pypi/pyversions/duckdb-utils.svg?logo=python&logoColor=white)](https://pypi.org/project/duckdb-utils/)
 [![Tests](https://github.com/databooth/duckdb-utils/workflows/Test/badge.svg)](https://github.com/databooth/duckdb-utils/actions?query=workflow%3ATest)
 [![Documentation Status](https://readthedocs.org/projects/duckdb-utils/badge/?version=stable)](http://duckdb-utils.databooth.com.au/en/stable/?badge=stable)
@@ -9,9 +9,17 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/databooth/duckdb-utils/blob/main/LICENSE)
 [![discord](https://img.shields.io/discord/823971286308356157?label=discord)](https://discord.gg/Ass7bCAMDw) -->
 
-Python CLI utility and library for manipulating DuckDB databases.
+Python CLI utility and library for manipulating `DuckDB` databases.
 
-## Some feature highlights
+## Idea
+
+In principle a "port" of the excellent [`sqlite-utils`](https://github.com/simonw/sqlite-utils) by Simon Willison. Not sure if the use case is there in `DuckDB`-land. Still thinking this through (or if there are similar offerings from others.) 
+
+## Status
+
+**This is in pre-beta and not yet working or released. Please do not use.**
+
+## Some potential features
 
 - [Pipe JSON](https://duckdb-utils.databooth.com.au/en/stable/cli.html#inserting-json-data) (or [CSV or TSV](https://duckdb-utils.databooth.com.au/en/stable/cli.html#inserting-csv-or-tsv-data)) directly into a new DuckDB database file, automatically creating a table with the appropriate schema
 - [Run in-memory SQL queries](https://duckdb-utils.databooth.com.au/en/stable/cli.html#querying-data-directly-using-an-in-memory-database), including joins, directly against data in CSV, TSV or JSON files and view the results

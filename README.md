@@ -1,13 +1,13 @@
 # duckdb-utils
 
 [![PyPI](https://img.shields.io/pypi/v/duckdb-utils.svg)](https://pypi.org/project/duckdb-utils/)
-[![Changelog](https://img.shields.io/github/v/release/databooth/duckdb-utils?include_prereleases&label=changelog)](https://duckdb-utils.databooth.com.au/en/stable/changelog.html)
+<-- [![Changelog](https://img.shields.io/github/v/release/databooth/duckdb-utils?include_prereleases&label=changelog)](https://duckdb-utils.databooth.com.au/en/stable/changelog.html)
 [![Python 3.x](https://img.shields.io/pypi/pyversions/duckdb-utils.svg?logo=python&logoColor=white)](https://pypi.org/project/duckdb-utils/)
 [![Tests](https://github.com/databooth/duckdb-utils/workflows/Test/badge.svg)](https://github.com/databooth/duckdb-utils/actions?query=workflow%3ATest)
 [![Documentation Status](https://readthedocs.org/projects/duckdb-utils/badge/?version=stable)](http://duckdb-utils.databooth.com.au/en/stable/?badge=stable)
 [![codecov](https://codecov.io/gh/databooth/duckdb-utils/branch/main/graph/badge.svg)](https://codecov.io/gh/databooth/duckdb-utils)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/databooth/duckdb-utils/blob/main/LICENSE)
-[![discord](https://img.shields.io/discord/823971286308356157?label=discord)](https://discord.gg/Ass7bCAMDw)
+[![discord](https://img.shields.io/discord/823971286308356157?label=discord)](https://discord.gg/Ass7bCAMDw) -->
 
 Python CLI utility and library for manipulating DuckDB databases.
 
